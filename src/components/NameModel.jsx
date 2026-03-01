@@ -10,6 +10,7 @@ import { Color } from "three";
 
 export function NameModel(props) {
   const [hoveredLetter, setHoveredLetter] = React.useState(null);
+  const [heldLetter, setHeldLetter] = React.useState(null);
   const groupRef = React.useRef(null);
   const { nodes, materials } = useGLTF("/models/name.glb");
   const baseColorsRef = React.useRef(new Map());
@@ -55,7 +56,9 @@ export function NameModel(props) {
         return;
       }
 
-      const targetScale = nodeName === hoveredLetter ? 1.08 : 1;
+      const activeLetter = heldLetter || hoveredLetter;
+
+      const targetScale = nodeName === activeLetter ? 1.08 : 1;
       const nextScale =
         child.scale.x + (targetScale - child.scale.x) * Math.min(1, delta * 12);
       child.scale.setScalar(nextScale);
@@ -70,7 +73,7 @@ export function NameModel(props) {
       }
 
       const targetColor =
-        nodeName === hoveredLetter ? hoverColorRef.current : baseColor;
+        nodeName === activeLetter ? hoverColorRef.current : baseColor;
       child.material.color.lerp(targetColor, Math.min(1, delta * 12));
     });
   });
@@ -84,7 +87,19 @@ export function NameModel(props) {
         const objectName = event.object?.name || "";
         setHoveredLetter(/^txt\.?\d+$/i.test(objectName) ? objectName : null);
       }}
-      onPointerOut={() => setHoveredLetter(null)}
+      onPointerDown={(event) => {
+        const objectName = event.object?.name || "";
+        if (/^txt\.?\d+$/i.test(objectName)) {
+          setHeldLetter(objectName);
+          setHoveredLetter(objectName);
+        }
+      }}
+      onPointerUp={() => setHeldLetter(null)}
+      onPointerCancel={() => setHeldLetter(null)}
+      onPointerOut={() => {
+        setHoveredLetter(null);
+        setHeldLetter(null);
+      }}
     >
       <mesh
         name="txt.13"

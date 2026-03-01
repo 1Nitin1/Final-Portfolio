@@ -1,5 +1,5 @@
 import React from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { gsap } from "gsap";
 import { Color } from "three";
 import Snowfall from "react-snowfall";
@@ -251,9 +251,11 @@ function RotatingModel({ rotationZ, isHovered }) {
 function HoverGeometry({ kind, position, baseColor, hoverColor, floatOffset }) {
   const meshRef = React.useRef(null);
   const [isHovered, setIsHovered] = React.useState(false);
+  const [isHeld, setIsHeld] = React.useState(false);
   const baseYRef = React.useRef(position[1]);
   const baseColorRef = React.useRef(new Color(baseColor));
   const hoverColorRef = React.useRef(new Color(hoverColor));
+  const isActive = isHovered || isHeld;
 
   useFrame((state, delta) => {
     if (!meshRef.current) {
@@ -264,13 +266,13 @@ function HoverGeometry({ kind, position, baseColor, hoverColor, floatOffset }) {
       baseYRef.current +
       Math.sin(state.clock.elapsedTime * 1.35 + floatOffset) * 0.09;
 
-    if (isHovered) {
+    if (isActive) {
       meshRef.current.rotation.x += delta * 1.4;
       meshRef.current.rotation.y += delta * 1.65;
       meshRef.current.rotation.z += delta * 0.8;
     }
 
-    const targetScale = isHovered ? 1.22 : 1;
+    const targetScale = isActive ? 1.22 : 1;
     const nextScale =
       meshRef.current.scale.x +
       (targetScale - meshRef.current.scale.x) * Math.min(1, delta * 8);
@@ -281,10 +283,8 @@ function HoverGeometry({ kind, position, baseColor, hoverColor, floatOffset }) {
       return;
     }
 
-    const targetColor = isHovered
-      ? hoverColorRef.current
-      : baseColorRef.current;
-    const emissiveLevel = isHovered ? 0.24 : 0.08;
+    const targetColor = isActive ? hoverColorRef.current : baseColorRef.current;
+    const emissiveLevel = isActive ? 0.24 : 0.08;
 
     material.color.lerp(targetColor, Math.min(1, delta * 9));
     material.emissiveIntensity +=
@@ -302,6 +302,19 @@ function HoverGeometry({ kind, position, baseColor, hoverColor, floatOffset }) {
       onPointerOut={(event) => {
         event.stopPropagation();
         setIsHovered(false);
+        setIsHeld(false);
+      }}
+      onPointerDown={(event) => {
+        event.stopPropagation();
+        setIsHeld(true);
+      }}
+      onPointerUp={(event) => {
+        event.stopPropagation();
+        setIsHeld(false);
+      }}
+      onPointerCancel={(event) => {
+        event.stopPropagation();
+        setIsHeld(false);
       }}
     >
       {kind === "box" && <boxGeometry args={[1.05, 1.05, 1.05]} />}
@@ -321,39 +334,48 @@ function HoverGeometry({ kind, position, baseColor, hoverColor, floatOffset }) {
 }
 
 function HomeGeometries() {
+  const { viewport } = useThree();
+  const spreadFactor = Math.max(0.56, Math.min(1, viewport.width / 12));
+  const verticalFactor = Math.max(0.78, Math.min(1, viewport.height / 7));
+
+  const fitPosition = React.useCallback(
+    (x, y, z) => [x * spreadFactor, y * verticalFactor, z],
+    [spreadFactor, verticalFactor],
+  );
+
   return (
     <group>
       <HoverGeometry
         kind="box"
-        position={[-3.5, 1.3, -1]}
+        position={fitPosition(-3.5, 1.3, -1)}
         baseColor="#9e68ff"
         hoverColor="#a8ffcc"
         floatOffset={0.3}
       />
       <HoverGeometry
         kind="torus"
-        position={[-1.9, -1.1, 0.2]}
+        position={fitPosition(-1.9, -1.1, 0.2)}
         baseColor="#8f5cf0"
         hoverColor="#9efec0"
         floatOffset={1.2}
       />
       <HoverGeometry
         kind="octa"
-        position={[0.4, 1.7, -0.8]}
+        position={fitPosition(0.4, 1.7, -0.8)}
         baseColor="#7b4bdd"
         hoverColor="#8df6b5"
         floatOffset={2.1}
       />
       <HoverGeometry
         kind="cone"
-        position={[2.2, -1.25, -0.3]}
+        position={fitPosition(2.2, -1.25, -0.3)}
         baseColor="#aa71ff"
         hoverColor="#b6ffce"
         floatOffset={2.8}
       />
       <HoverGeometry
         kind="ico"
-        position={[3.6, 1.2, 0.1]}
+        position={fitPosition(3.6, 1.2, 0.1)}
         baseColor="#935ff6"
         hoverColor="#98f8bd"
         floatOffset={3.6}
@@ -368,6 +390,7 @@ function App() {
   const [showGrowthTimeline, setShowGrowthTimeline] = React.useState(false);
   const [modelZRotation, setModelZRotation] = React.useState(0);
   const [isModelHovered, setIsModelHovered] = React.useState(false);
+  const [isModelHeld, setIsModelHeld] = React.useState(false);
   const aboutSectionRef = React.useRef(null);
   const aboutCardRef = React.useRef(null);
   const skillFillRefs = React.useRef({});
@@ -520,6 +543,7 @@ function App() {
     event.currentTarget.style.setProperty("--my", "50%");
     setModelZRotation(0);
     setIsModelHovered(false);
+    setIsModelHeld(false);
   };
 
   const handleNavClick = (sectionId) => {
@@ -579,6 +603,8 @@ function App() {
       transformPerspective: 900,
       transformOrigin: "center",
     });
+
+    moveSneakyEyesToPoint(event.clientX, event.clientY);
   };
 
   const handleCardLeave = () => {
@@ -592,6 +618,8 @@ function App() {
       duration: 0.45,
       ease: "power3.out",
     });
+
+    resetBuddyEyes();
   };
 
   const handleShowGrowthTimeline = () => {
@@ -614,34 +642,21 @@ function App() {
     );
   };
 
-  const moveSneakyEyes = (targetElement, isTyping = false) => {
+  const moveSneakyEyesToPoint = (targetX, targetY, isTyping = false) => {
     if (
       !sneakyRectRef.current ||
       !leftPupilRef.current ||
-      !rightPupilRef.current ||
-      !targetElement
+      !rightPupilRef.current
     ) {
       return;
     }
-
-    const targetRect = targetElement.getBoundingClientRect();
     const sneakyRect = sneakyRectRef.current.getBoundingClientRect();
 
     const eyeCenterX = sneakyRect.left + sneakyRect.width / 2;
     const eyeCenterY = sneakyRect.top + sneakyRect.height * 0.2;
-    const targetCenterX = targetRect.left + targetRect.width / 2;
-    const targetCenterY = targetRect.top + targetRect.height / 2;
 
-    const offsetX = gsap.utils.clamp(
-      -6,
-      6,
-      (targetCenterX - eyeCenterX) * 0.06,
-    );
-    const offsetY = gsap.utils.clamp(
-      -5,
-      5,
-      (targetCenterY - eyeCenterY) * 0.06,
-    );
+    const offsetX = gsap.utils.clamp(-6, 6, (targetX - eyeCenterX) * 0.06);
+    const offsetY = gsap.utils.clamp(-5, 5, (targetY - eyeCenterY) * 0.06);
 
     gsap.to([leftPupilRef.current, rightPupilRef.current], {
       x: offsetX,
@@ -684,15 +699,19 @@ function App() {
     });
   };
 
-  const handleFieldFocus = (event) => {
-    moveSneakyEyes(event.currentTarget);
+  const moveSneakyEyes = (targetElement, isTyping = false) => {
+    if (!targetElement) {
+      return;
+    }
+
+    const targetRect = targetElement.getBoundingClientRect();
+    const targetCenterX = targetRect.left + targetRect.width / 2;
+    const targetCenterY = targetRect.top + targetRect.height / 2;
+
+    moveSneakyEyesToPoint(targetCenterX, targetCenterY, isTyping);
   };
 
-  const handleFieldInput = (event) => {
-    moveSneakyEyes(event.currentTarget, true);
-  };
-
-  const handleFieldBlur = () => {
+  const resetBuddyEyes = () => {
     if (
       !leftPupilRef.current ||
       !rightPupilRef.current ||
@@ -737,6 +756,18 @@ function App() {
       ease: "power2.out",
       stagger: 0.04,
     });
+  };
+
+  const handleFieldFocus = (event) => {
+    moveSneakyEyes(event.currentTarget);
+  };
+
+  const handleFieldInput = (event) => {
+    moveSneakyEyes(event.currentTarget, true);
+  };
+
+  const handleFieldBlur = () => {
+    resetBuddyEyes();
   };
 
   return (
@@ -854,16 +885,23 @@ function App() {
 
         <div
           className="canvas-container"
-          onMouseEnter={() => setIsModelHovered(true)}
-          onMouseMove={handleCanvasMove}
-          onMouseLeave={handleCanvasLeave}
+          onPointerEnter={() => setIsModelHovered(true)}
+          onPointerMove={handleCanvasMove}
+          onPointerLeave={handleCanvasLeave}
+          onPointerDown={() => {
+            setIsModelHeld(true);
+            setIsModelHovered(true);
+          }}
+          onPointerUp={() => setIsModelHeld(false)}
+          onPointerCancel={() => setIsModelHeld(false)}
         >
+          <span className="canvas-hold-hint">Hold to rotate</span>
           <Canvas camera={{ position: [2, 2, 4], fov: 60 }}>
             <ambientLight intensity={0.6} />
             <directionalLight position={[3, 3, 3]} intensity={1} />
             <RotatingModel
               rotationZ={modelZRotation}
-              isHovered={isModelHovered}
+              isHovered={isModelHovered || isModelHeld}
             />
           </Canvas>
         </div>
@@ -944,8 +982,8 @@ function App() {
         <div
           ref={contactCardRef}
           className="contact-card"
-          onMouseMove={handleCardMove}
-          onMouseLeave={handleCardLeave}
+          onPointerMove={handleCardMove}
+          onPointerLeave={handleCardLeave}
         >
           <p className="contact-kicker contact-animate">Get In Touch</p>
           <h2 className="contact-title contact-animate">
