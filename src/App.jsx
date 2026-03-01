@@ -391,6 +391,8 @@ function App() {
   const [modelZRotation, setModelZRotation] = React.useState(0);
   const [isModelHovered, setIsModelHovered] = React.useState(false);
   const [isModelHeld, setIsModelHeld] = React.useState(false);
+  const [isNameContainerHeld, setIsNameContainerHeld] = React.useState(false);
+  const isModelHeldRef = React.useRef(false);
   const aboutSectionRef = React.useRef(null);
   const aboutCardRef = React.useRef(null);
   const skillFillRefs = React.useRef({});
@@ -528,6 +530,11 @@ function App() {
   };
 
   const handleCanvasMove = (event) => {
+    const pointerType = event.pointerType || "mouse";
+    if (pointerType === "touch" && !isModelHeldRef.current) {
+      return;
+    }
+
     const bounds = event.currentTarget.getBoundingClientRect();
     const x = event.clientX - bounds.left;
     const y = event.clientY - bounds.top;
@@ -544,6 +551,78 @@ function App() {
     setModelZRotation(0);
     setIsModelHovered(false);
     setIsModelHeld(false);
+    isModelHeldRef.current = false;
+  };
+
+  const handleCanvasPointerDown = (event) => {
+    setIsModelHeld(true);
+    setIsModelHovered(true);
+    isModelHeldRef.current = true;
+
+    if (typeof event.currentTarget.setPointerCapture === "function") {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+  };
+
+  const handleCanvasPointerUp = (event) => {
+    setIsModelHeld(false);
+    isModelHeldRef.current = false;
+
+    if (typeof event.currentTarget.releasePointerCapture === "function") {
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {}
+    }
+
+    if (event.pointerType === "touch") {
+      setIsModelHovered(false);
+      setModelZRotation(0);
+      event.currentTarget.style.setProperty("--mx", "50%");
+      event.currentTarget.style.setProperty("--my", "50%");
+    }
+  };
+
+  const handleCanvasPointerCancel = (event) => {
+    setIsModelHeld(false);
+    isModelHeldRef.current = false;
+    setIsModelHovered(false);
+    setModelZRotation(0);
+    event.currentTarget.style.setProperty("--mx", "50%");
+    event.currentTarget.style.setProperty("--my", "50%");
+
+    if (typeof event.currentTarget.releasePointerCapture === "function") {
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {}
+    }
+  };
+
+  const handleNameCanvasPointerDown = (event) => {
+    setIsNameContainerHeld(true);
+
+    if (typeof event.currentTarget.setPointerCapture === "function") {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+  };
+
+  const handleNameCanvasPointerUp = (event) => {
+    setIsNameContainerHeld(false);
+
+    if (typeof event.currentTarget.releasePointerCapture === "function") {
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {}
+    }
+  };
+
+  const handleNameCanvasPointerCancel = (event) => {
+    setIsNameContainerHeld(false);
+
+    if (typeof event.currentTarget.releasePointerCapture === "function") {
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {}
+    }
   };
 
   const handleNavClick = (sectionId) => {
@@ -839,7 +918,13 @@ function App() {
         >
           <div ref={aboutCardRef} className="about-card">
             <p className="about-kicker about-animate">About Me</p>
-            <div className="about-name-canvas about-animate">
+            <div
+              className="about-name-canvas about-animate"
+              onPointerDown={handleNameCanvasPointerDown}
+              onPointerUp={handleNameCanvasPointerUp}
+              onPointerCancel={handleNameCanvasPointerCancel}
+              onPointerLeave={handleNameCanvasPointerCancel}
+            >
               <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
                 <ambientLight intensity={0.9} />
                 <directionalLight position={[2, 2, 4]} intensity={1.1} />
@@ -847,6 +932,7 @@ function App() {
                   position={[-5.5, -0.5, 0]}
                   rotation={[Math.PI / 2, 0, 0]}
                   scale={1.8}
+                  mobileHoldActive={isNameContainerHeld}
                 />
               </Canvas>
             </div>
@@ -884,16 +970,13 @@ function App() {
         </section>
 
         <div
-          className="canvas-container"
+          className={`canvas-container ${isModelHovered || isModelHeld ? "active" : ""}`}
           onPointerEnter={() => setIsModelHovered(true)}
           onPointerMove={handleCanvasMove}
           onPointerLeave={handleCanvasLeave}
-          onPointerDown={() => {
-            setIsModelHeld(true);
-            setIsModelHovered(true);
-          }}
-          onPointerUp={() => setIsModelHeld(false)}
-          onPointerCancel={() => setIsModelHeld(false)}
+          onPointerDown={handleCanvasPointerDown}
+          onPointerUp={handleCanvasPointerUp}
+          onPointerCancel={handleCanvasPointerCancel}
         >
           <span className="canvas-hold-hint">Hold to rotate</span>
           <Canvas camera={{ position: [2, 2, 4], fov: 60 }}>

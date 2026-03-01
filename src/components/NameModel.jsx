@@ -9,12 +9,17 @@ import { useGLTF } from "@react-three/drei";
 import { Color } from "three";
 
 export function NameModel(props) {
+  const { mobileHoldActive = false, ...restProps } = props;
   const [hoveredLetter, setHoveredLetter] = React.useState(null);
   const [heldLetter, setHeldLetter] = React.useState(null);
+  const [pulsedLetter, setPulsedLetter] = React.useState(null);
+  const [isMobileView, setIsMobileView] = React.useState(false);
   const groupRef = React.useRef(null);
   const { nodes, materials } = useGLTF("/models/name.glb");
   const baseColorsRef = React.useRef(new Map());
   const hoverColorRef = React.useRef(new Color("#90EE90"));
+  const pulseColorRef = React.useRef(new Color("#90EE90"));
+  const letterNamesRef = React.useRef([]);
 
   React.useEffect(() => {
     if (!groupRef.current) {
@@ -37,13 +42,78 @@ export function NameModel(props) {
 
       child.material = child.material.clone();
       baseColorsRef.current.set(child.uuid, child.material.color.clone());
+
+      if (!letterNamesRef.current.includes(nodeName)) {
+        letterNamesRef.current.push(nodeName);
+      }
     });
   }, []);
+
+  React.useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia(
+      "(max-width: 760px) and (pointer: coarse)",
+    );
+    const updateMobileState = () => {
+      setIsMobileView(mediaQuery.matches);
+    };
+
+    updateMobileState();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", updateMobileState);
+    } else if (typeof mediaQuery.addListener === "function") {
+      mediaQuery.addListener(updateMobileState);
+    }
+
+    return () => {
+      if (typeof mediaQuery.removeEventListener === "function") {
+        mediaQuery.removeEventListener("change", updateMobileState);
+      } else if (typeof mediaQuery.removeListener === "function") {
+        mediaQuery.removeListener(updateMobileState);
+      }
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const isRandomPulseMode = isMobileView && mobileHoldActive;
+
+    if (!isRandomPulseMode) {
+      setPulsedLetter(null);
+      return;
+    }
+
+    const pulse = () => {
+      const letterNames = letterNamesRef.current;
+      if (!letterNames.length) {
+        return;
+      }
+
+      const randomIndex = Math.floor(Math.random() * letterNames.length);
+      setPulsedLetter(letterNames[randomIndex]);
+      pulseColorRef.current.setHSL(Math.random(), 0.78, 0.62);
+    };
+
+    pulse();
+    const intervalId = window.setInterval(pulse, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isMobileView, mobileHoldActive]);
 
   useFrame((_, delta) => {
     if (!groupRef.current) {
       return;
     }
+
+    const isRandomPulseMode = isMobileView && mobileHoldActive;
 
     groupRef.current.traverse((child) => {
       if (!child?.isMesh) {
@@ -56,9 +126,17 @@ export function NameModel(props) {
         return;
       }
 
-      const activeLetter = heldLetter || hoveredLetter;
+      const activeLetter = isRandomPulseMode
+        ? pulsedLetter
+        : heldLetter || hoveredLetter;
 
-      const targetScale = nodeName === activeLetter ? 1.08 : 1;
+      const activeColor = isRandomPulseMode
+        ? pulseColorRef.current
+        : hoverColorRef.current;
+
+      const activeScale = isRandomPulseMode ? 1.16 : 1.08;
+
+      const targetScale = nodeName === activeLetter ? activeScale : 1;
       const nextScale =
         child.scale.x + (targetScale - child.scale.x) * Math.min(1, delta * 12);
       child.scale.setScalar(nextScale);
@@ -72,8 +150,7 @@ export function NameModel(props) {
         return;
       }
 
-      const targetColor =
-        nodeName === activeLetter ? hoverColorRef.current : baseColor;
+      const targetColor = nodeName === activeLetter ? activeColor : baseColor;
       child.material.color.lerp(targetColor, Math.min(1, delta * 12));
     });
   });
@@ -81,7 +158,7 @@ export function NameModel(props) {
   return (
     <group
       ref={groupRef}
-      {...props}
+      {...restProps}
       dispose={null}
       onPointerMove={(event) => {
         const objectName = event.object?.name || "";

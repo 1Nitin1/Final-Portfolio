@@ -258,6 +258,8 @@ body,
   background: rgba(19, 8, 34, 0.45);
   margin-bottom: 10px;
   margin-right: auto;
+  touch-action: none;
+  user-select: none;
 }
 
 .about-text {
@@ -625,6 +627,8 @@ body,
     100% 100%;
   box-shadow: 0 20px 40px rgba(7, 3, 15, 0.45);
   isolation: isolate;
+  touch-action: none;
+  user-select: none;
 }
 
 .canvas-hold-hint {
@@ -687,6 +691,14 @@ body,
 }
 
 .canvas-container:hover::after {
+  opacity: 1;
+}
+
+.canvas-container.active::before {
+  opacity: 1;
+}
+
+.canvas-container.active::after {
   opacity: 1;
 }
 
