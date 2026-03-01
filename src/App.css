@@ -992,6 +992,28 @@ body,
   box-shadow: 0 12px 24px rgba(103, 41, 189, 0.42);
 }
 
+.contact-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+  transform: none;
+  box-shadow: none;
+  filter: none;
+}
+
+.contact-feedback {
+  margin: 8px 0 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.contact-feedback.success {
+  color: rgba(169, 255, 210, 0.95);
+}
+
+.contact-feedback.error {
+  color: rgba(255, 187, 203, 0.96);
+}
+
 @media (max-width: 1180px) {
   .main-screen {
     gap: 18px;

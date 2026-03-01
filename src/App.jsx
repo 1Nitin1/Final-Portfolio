@@ -392,6 +392,9 @@ function App() {
   const [isModelHovered, setIsModelHovered] = React.useState(false);
   const [isModelHeld, setIsModelHeld] = React.useState(false);
   const [isNameContainerHeld, setIsNameContainerHeld] = React.useState(false);
+  const [isContactSubmitting, setIsContactSubmitting] = React.useState(false);
+  const [contactSubmitStatus, setContactSubmitStatus] = React.useState("idle");
+  const [contactSubmitMessage, setContactSubmitMessage] = React.useState("");
   const isModelHeldRef = React.useRef(false);
   const aboutSectionRef = React.useRef(null);
   const aboutCardRef = React.useRef(null);
@@ -705,20 +708,75 @@ function App() {
     setShowGrowthTimeline((prev) => !prev);
   };
 
-  const handleContactSubmit = (event) => {
+  const handleContactSubmit = async (event) => {
     event.preventDefault();
 
-    gsap.fromTo(
-      ".contact-submit",
-      { scale: 1 },
-      {
-        scale: 1.05,
-        yoyo: true,
-        repeat: 1,
-        duration: 0.12,
-        ease: "power1.out",
-      },
-    );
+    if (isContactSubmitting) {
+      return;
+    }
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const name = (formData.get("name") || "").toString().trim();
+    const email = (formData.get("email") || "").toString().trim();
+    const message = (formData.get("message") || "").toString().trim();
+
+    if (!name || !email || !message) {
+      setContactSubmitStatus("error");
+      setContactSubmitMessage("Please fill out all fields before sending.");
+      return;
+    }
+
+    setIsContactSubmitting(true);
+    setContactSubmitStatus("idle");
+    setContactSubmitMessage("");
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email, message }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          payload?.message || "Unable to send your message right now.",
+        );
+      }
+
+      setContactSubmitStatus("success");
+      setContactSubmitMessage(
+        payload?.message ||
+          "Message sent successfully. I will get back to you soon.",
+      );
+      form.reset();
+      handleFieldBlur();
+
+      gsap.fromTo(
+        ".contact-submit",
+        { scale: 1 },
+        {
+          scale: 1.05,
+          yoyo: true,
+          repeat: 1,
+          duration: 0.12,
+          ease: "power1.out",
+        },
+      );
+    } catch (error) {
+      setContactSubmitStatus("error");
+      setContactSubmitMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to send your message right now.",
+      );
+    } finally {
+      setIsContactSubmitting(false);
+    }
   };
 
   const moveSneakyEyesToPoint = (targetX, targetY, isTyping = false) => {
@@ -1171,9 +1229,23 @@ function App() {
                 onBlur={handleFieldBlur}
               />
 
-              <button type="submit" className="contact-submit">
-                Send Message
+              <button
+                type="submit"
+                className="contact-submit"
+                disabled={isContactSubmitting}
+              >
+                {isContactSubmitting ? "Sending..." : "Send Message"}
               </button>
+
+              {contactSubmitMessage ? (
+                <p
+                  className={`contact-feedback ${contactSubmitStatus === "success" ? "success" : "error"}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {contactSubmitMessage}
+                </p>
+              ) : null}
             </form>
           </div>
         </div>
