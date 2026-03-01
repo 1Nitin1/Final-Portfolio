@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { gsap } from "gsap";
 import { Color } from "three";
@@ -6,6 +6,7 @@ import Snowfall from "react-snowfall";
 import "./App.css";
 import { Model } from "./components/Model";
 import { NameModel } from "./components/NameModel";
+import portfolioLogo from "./assets/logo .png";
 
 const navItems = [
   { id: "home", label: "Home" },
@@ -910,7 +911,14 @@ function App() {
   return (
     <div className="app-shell">
       <header className="top-taskbar">
-        <div className="taskbar-brand">Portfolio</div>
+        <div className="taskbar-brand">
+          <img
+            src={portfolioLogo}
+            alt="Portfolio logo"
+            className="taskbar-logo"
+          />
+          <span>Portfolio</span>
+        </div>
         <nav className="taskbar-nav" aria-label="Portfolio navigation">
           {navItems.map((item) => (
             <button
@@ -986,12 +994,14 @@ function App() {
               <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
                 <ambientLight intensity={0.9} />
                 <directionalLight position={[2, 2, 4]} intensity={1.1} />
-                <NameModel
-                  position={[-5.5, -0.5, 0]}
-                  rotation={[Math.PI / 2, 0, 0]}
-                  scale={1.8}
-                  mobileHoldActive={isNameContainerHeld}
-                />
+                <Suspense fallback={null}>
+                  <NameModel
+                    position={[-5.5, -0.5, 0]}
+                    rotation={[Math.PI / 2, 0, 0]}
+                    scale={1.8}
+                    mobileHoldActive={isNameContainerHeld}
+                  />
+                </Suspense>
               </Canvas>
             </div>
             <p className="about-text about-animate">
@@ -1040,10 +1050,12 @@ function App() {
           <Canvas camera={{ position: [2, 2, 4], fov: 60 }}>
             <ambientLight intensity={0.6} />
             <directionalLight position={[3, 3, 3]} intensity={1} />
-            <RotatingModel
-              rotationZ={modelZRotation}
-              isHovered={isModelHovered || isModelHeld}
-            />
+            <Suspense fallback={null}>
+              <RotatingModel
+                rotationZ={modelZRotation}
+                isHovered={isModelHovered || isModelHeld}
+              />
+            </Suspense>
           </Canvas>
         </div>
       </main>

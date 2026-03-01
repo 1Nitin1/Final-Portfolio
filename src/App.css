@@ -45,11 +45,21 @@ body,
 }
 
 .taskbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: #f2e7ff;
   font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
+}
+
+.taskbar-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  border-radius: 6px;
 }
 
 .taskbar-nav {

@@ -18,6 +18,24 @@ You can use either:
 - `DATABASE_URL=postgresql://...`
 - or separate fields (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`).
 
+For contact email notifications (Nodemailer), also configure:
+
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_SECURE`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `MAIL_FROM`
+- `MAIL_TO` (default recipient can be `nitinkumarbaranawal@gmail.com`)
+
+For Gmail SMTP, use:
+
+- `SMTP_HOST=smtp.gmail.com`
+- `SMTP_PORT=587`
+- `SMTP_SECURE=false`
+- `SMTP_USER=<your-gmail>`
+- `SMTP_PASS=<your-gmail-app-password>`
+
 ## Run locally
 
 Frontend (Vite):
@@ -39,3 +57,4 @@ Vite proxies `/api/*` to `http://localhost:3001` in development.
 - `POST /api/contact`
   - body: `{ "name": "...", "email": "...", "message": "..." }`
   - stores to `contacts(name, email, message, ip_address, user_agent)`
+  - sends formatted email notification via Nodemailer when SMTP env vars are configured

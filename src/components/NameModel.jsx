@@ -15,11 +15,25 @@ export function NameModel(props) {
   const [pulsedLetter, setPulsedLetter] = React.useState(null);
   const [isMobileView, setIsMobileView] = React.useState(false);
   const groupRef = React.useRef(null);
-  const { nodes, materials } = useGLTF("/models/name.glb");
+  const { nodes, materials, scene } = useGLTF("/models/name.glb");
   const baseColorsRef = React.useRef(new Map());
   const hoverColorRef = React.useRef(new Color("#90EE90"));
   const pulseColorRef = React.useRef(new Color("#90EE90"));
   const letterNamesRef = React.useRef([]);
+  const hasExpectedLetters =
+    !!nodes?.txt13?.geometry &&
+    !!nodes?.txt12?.geometry &&
+    !!nodes?.txt11?.geometry &&
+    !!nodes?.txt10?.geometry &&
+    !!nodes?.txt9?.geometry &&
+    !!nodes?.txt8?.geometry &&
+    !!nodes?.txt7?.geometry &&
+    !!nodes?.txt6?.geometry &&
+    !!nodes?.txt5?.geometry &&
+    !!nodes?.txt4?.geometry &&
+    !!nodes?.txt3?.geometry &&
+    !!nodes?.txt2?.geometry &&
+    !!nodes?.txt1?.geometry;
 
   React.useEffect(() => {
     if (!groupRef.current) {
@@ -178,71 +192,77 @@ export function NameModel(props) {
         setHeldLetter(null);
       }}
     >
-      <mesh
-        name="txt.13"
-        geometry={nodes.txt13.geometry}
-        material={materials["Material.001"]}
-      />
-      <mesh
-        name="txt.12"
-        geometry={nodes.txt12.geometry}
-        material={nodes.txt12.material}
-      />
-      <mesh
-        name="txt.11"
-        geometry={nodes.txt11.geometry}
-        material={nodes.txt11.material}
-      />
-      <mesh
-        name="txt.10"
-        geometry={nodes.txt10.geometry}
-        material={nodes.txt10.material}
-      />
-      <mesh
-        name="txt.9"
-        geometry={nodes.txt9.geometry}
-        material={nodes.txt9.material}
-      />
-      <mesh
-        name="txt.8"
-        geometry={nodes.txt8.geometry}
-        material={nodes.txt8.material}
-      />
-      <mesh
-        name="txt.7"
-        geometry={nodes.txt7.geometry}
-        material={nodes.txt7.material}
-      />
-      <mesh
-        name="txt.6"
-        geometry={nodes.txt6.geometry}
-        material={nodes.txt6.material}
-      />
-      <mesh
-        name="txt.5"
-        geometry={nodes.txt5.geometry}
-        material={nodes.txt5.material}
-      />
-      <mesh
-        name="txt.4"
-        geometry={nodes.txt4.geometry}
-        material={nodes.txt4.material}
-      />
-      <mesh
-        name="txt.3"
-        geometry={nodes.txt3.geometry}
-        material={nodes.txt3.material}
-      />
-      <mesh
-        name="txt.2"
-        geometry={nodes.txt2.geometry}
-        material={nodes.txt2.material}
-      />
-      <mesh
-        name="txt.1"
-        geometry={nodes.txt1.geometry}
-        material={nodes.txt1.material}
-      />
+      {hasExpectedLetters ? (
+        <>
+          <mesh
+            name="txt.13"
+            geometry={nodes.txt13.geometry}
+            material={materials["Material.001"]}
+          />
+          <mesh
+            name="txt.12"
+            geometry={nodes.txt12.geometry}
+            material={nodes.txt12.material}
+          />
+          <mesh
+            name="txt.11"
+            geometry={nodes.txt11.geometry}
+            material={nodes.txt11.material}
+          />
+          <mesh
+            name="txt.10"
+            geometry={nodes.txt10.geometry}
+            material={nodes.txt10.material}
+          />
+          <mesh
+            name="txt.9"
+            geometry={nodes.txt9.geometry}
+            material={nodes.txt9.material}
+          />
+          <mesh
+            name="txt.8"
+            geometry={nodes.txt8.geometry}
+            material={nodes.txt8.material}
+          />
+          <mesh
+            name="txt.7"
+            geometry={nodes.txt7.geometry}
+            material={nodes.txt7.material}
+          />
+          <mesh
+            name="txt.6"
+            geometry={nodes.txt6.geometry}
+            material={nodes.txt6.material}
+          />
+          <mesh
+            name="txt.5"
+            geometry={nodes.txt5.geometry}
+            material={nodes.txt5.material}
+          />
+          <mesh
+            name="txt.4"
+            geometry={nodes.txt4.geometry}
+            material={nodes.txt4.material}
+          />
+          <mesh
+            name="txt.3"
+            geometry={nodes.txt3.geometry}
+            material={nodes.txt3.material}
+          />
+          <mesh
+            name="txt.2"
+            geometry={nodes.txt2.geometry}
+            material={nodes.txt2.material}
+          />
+          <mesh
+            name="txt.1"
+            geometry={nodes.txt1.geometry}
+            material={nodes.txt1.material}
+          />
+        </>
+      ) : (
+        <primitive object={scene} />
+      )}
     </group>
   );
 }

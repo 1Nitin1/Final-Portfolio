@@ -2,6 +2,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import rateLimit from "express-rate-limit";
+import nodemailer from "nodemailer";
 import { Pool } from "pg";
 
 dotenv.config();
@@ -10,6 +11,117 @@ const app = express();
 const port = Number(process.env.PORT || 3001);
 
 const allowedOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+const defaultMailTo = "nitinkumarbaranawal@gmail.com";
+
+let transporter;
+
+function getTransporter() {
+  if (transporter) {
+    return transporter;
+  }
+
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+
+  if (!smtpHost || !smtpUser || !smtpPass) {
+    return null;
+  }
+
+  transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+  });
+
+  return transporter;
+}
+
+async function sendContactNotification({
+  name,
+  email,
+  message,
+  ipAddress,
+  userAgent,
+}) {
+  const mailer = getTransporter();
+
+  if (!mailer) {
+    return {
+      sent: false,
+      reason: "Mailer is not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS.",
+    };
+  }
+
+  const mailTo = process.env.MAIL_TO || defaultMailTo;
+  const mailFrom = process.env.MAIL_FROM || process.env.SMTP_USER;
+  const submittedAt = new Date().toLocaleString("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
+  const subject = `New Portfolio Contact Message from ${name}`;
+  const text = [
+    "New contact form submission",
+    "",
+    `Name: ${name}`,
+    `Email: ${email}`,
+    `Submitted at: ${submittedAt}`,
+    `IP Address: ${ipAddress || "Unavailable"}`,
+    `User Agent: ${userAgent || "Unavailable"}`,
+    "",
+    "Message:",
+    message,
+  ].join("\n");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
+      <h2 style="margin: 0 0 12px; color: #111827;">📩 New Portfolio Contact Submission</h2>
+      <p style="margin: 0 0 14px;">You received a new message through your portfolio contact form.</p>
+
+      <table style="border-collapse: collapse; width: 100%; max-width: 700px; margin-bottom: 14px;">
+        <tr>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; background: #f9fafb;"><strong>Name</strong></td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb;">${name}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; background: #f9fafb;"><strong>Email</strong></td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb;">${email}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; background: #f9fafb;"><strong>Submitted At</strong></td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb;">${submittedAt}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; background: #f9fafb;"><strong>IP Address</strong></td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb;">${ipAddress || "Unavailable"}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; background: #f9fafb;"><strong>User Agent</strong></td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb;">${userAgent || "Unavailable"}</td>
+        </tr>
+      </table>
+
+      <h3 style="margin: 0 0 8px; color: #111827;">Message</h3>
+      <div style="padding: 12px; border: 1px solid #e5e7eb; background: #f8fafc; border-radius: 8px; white-space: pre-wrap;">${message}</div>
+    </div>
+  `;
+
+  await mailer.sendMail({
+    from: mailFrom,
+    to: mailTo,
+    replyTo: email,
+    subject,
+    text,
+    html,
+  });
+
+  return { sent: true };
+}
 
 const pool = new Pool(
   process.env.DATABASE_URL
@@ -110,9 +222,19 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
       [name, email, message, ipAddress, userAgent],
     );
 
+    const mailResult = await sendContactNotification({
+      name,
+      email,
+      message,
+      ipAddress,
+      userAgent,
+    });
+
     return res.status(201).json({
       success: true,
-      message: "Message sent successfully.",
+      message: mailResult.sent
+        ? "Message sent successfully. Notification email delivered."
+        : "Message saved, but email notification is not configured yet.",
     });
   } catch (error) {
     console.error("Error saving contact form:", error);
