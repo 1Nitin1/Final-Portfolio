@@ -428,6 +428,15 @@ body,
     rgba(180, 132, 255, 0.04)
   );
   margin-bottom: 10px;
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+  user-select: none;
+}
+
+.skill-model-canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .skill-model-slot-label {
@@ -435,6 +444,23 @@ body,
   font-size: 0.8rem;
   letter-spacing: 0.02em;
   text-align: center;
+  padding: 0 8px;
+}
+
+.skill-model-hint {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(218, 194, 255, 0.38);
+  background: rgba(19, 9, 33, 0.68);
+  color: rgba(244, 232, 255, 0.9);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  pointer-events: none;
 }
 
 .domain-skill-name {

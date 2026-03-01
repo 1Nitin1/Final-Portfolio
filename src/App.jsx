@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
 import { gsap } from "gsap";
 import { Color } from "three";
 import Snowfall from "react-snowfall";
@@ -35,6 +36,29 @@ const skillLabels = {
 };
 
 const homeRoleTitles = ["AI/ML Developer", "Web Developer", "3D Designer"];
+
+const skillModelConfig = {
+  Blender: {
+    modelPath: "/models/blender.glb",
+    cameraPosition: [0, 0, 4.2],
+    fov: 42,
+    ambientIntensity: 1.5,
+    lightBoost: 1.35,
+    baseScale: 12,
+    position: [0, 0, 0],
+    initialRotation: [0, 0, 0],
+  },
+  Figma: {
+    modelPath: "/models/figma.glb",
+    cameraPosition: [0, 0.1, 4.5],
+    fov: 44,
+    ambientIntensity: 3,
+    lightBoost: 1.35,
+    baseScale: 14,
+    position: [0, 0, 0],
+    initialRotation: [0, 0, 0],
+  },
+};
 
 const skillDomains = [
   {
@@ -382,6 +406,154 @@ function HomeGeometries() {
         floatOffset={3.6}
       />
     </group>
+  );
+}
+
+function InteractiveSkillModel({
+  modelPath,
+  baseScale,
+  position,
+  initialRotation,
+  lightBoost = 1,
+}) {
+  const modelGroupRef = React.useRef(null);
+  const [isHovered, setIsHovered] = React.useState(false);
+  const [isHeld, setIsHeld] = React.useState(false);
+  const isActive = isHovered || isHeld;
+  const { scene } = useGLTF(modelPath);
+  const clonedScene = React.useMemo(() => scene.clone(), [scene]);
+
+  React.useEffect(() => {
+    const applyBoost = (material) => {
+      if (!material || Array.isArray(material)) {
+        return;
+      }
+
+      if (
+        material.color &&
+        typeof material.color.multiplyScalar === "function"
+      ) {
+        material.color.multiplyScalar(lightBoost);
+      }
+
+      if (typeof material.emissiveIntensity === "number") {
+        material.emissiveIntensity = Math.max(
+          material.emissiveIntensity,
+          0.4 * lightBoost,
+        );
+      }
+
+      if (typeof material.envMapIntensity === "number") {
+        material.envMapIntensity = Math.max(
+          material.envMapIntensity,
+          1.1 * lightBoost,
+        );
+      }
+
+      material.needsUpdate = true;
+    };
+
+    clonedScene.traverse((child) => {
+      if (!child?.isMesh) {
+        return;
+      }
+
+      if (Array.isArray(child.material)) {
+        child.material = child.material.map((material) => material.clone());
+        child.material.forEach(applyBoost);
+      } else if (child.material) {
+        child.material = child.material.clone();
+        applyBoost(child.material);
+      }
+    });
+  }, [clonedScene, lightBoost]);
+
+  useFrame((_, delta) => {
+    if (!modelGroupRef.current) {
+      return;
+    }
+
+    const rotationYSpeed = isActive ? 1.7 : 0.45;
+    modelGroupRef.current.rotation.y += delta * rotationYSpeed;
+
+    const targetScale = baseScale * (isActive ? 1.12 : 1);
+    const nextScale =
+      modelGroupRef.current.scale.x +
+      (targetScale - modelGroupRef.current.scale.x) * Math.min(1, delta * 8);
+    modelGroupRef.current.scale.setScalar(nextScale);
+  });
+
+  return (
+    <group position={position} rotation={initialRotation}>
+      <group
+        ref={modelGroupRef}
+        onPointerOver={(event) => {
+          event.stopPropagation();
+          setIsHovered(true);
+        }}
+        onPointerOut={(event) => {
+          event.stopPropagation();
+          setIsHovered(false);
+          setIsHeld(false);
+        }}
+        onPointerDown={(event) => {
+          event.stopPropagation();
+          setIsHeld(true);
+        }}
+        onPointerUp={(event) => {
+          event.stopPropagation();
+          setIsHeld(false);
+        }}
+        onPointerCancel={(event) => {
+          event.stopPropagation();
+          setIsHeld(false);
+        }}
+      >
+        <primitive object={clonedScene} />
+      </group>
+    </group>
+  );
+}
+
+function SkillModelSlot({ cardName }) {
+  const config = skillModelConfig[cardName];
+
+  if (!config) {
+    return (
+      <div className="skill-model-slot" aria-hidden="true">
+        <span className="skill-model-slot-label">
+          3D Model Slot · {cardName}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="skill-model-slot" aria-hidden="true">
+      <Canvas
+        className="skill-model-canvas"
+        camera={{ position: config.cameraPosition, fov: config.fov }}
+      >
+        <ambientLight intensity={config.ambientIntensity ?? 0.78} />
+        <hemisphereLight
+          intensity={1.05}
+          color="#fff2ff"
+          groundColor="#35174f"
+        />
+        <directionalLight position={[2.5, 3, 2.5]} intensity={1.4} />
+        <pointLight position={[-2, 1.2, 2]} intensity={1.15} color="#c99bff" />
+        <Suspense fallback={null}>
+          <InteractiveSkillModel
+            modelPath={config.modelPath}
+            baseScale={config.baseScale}
+            position={config.position}
+            initialRotation={config.initialRotation}
+            lightBoost={config.lightBoost}
+          />
+        </Suspense>
+      </Canvas>
+      <span className="skill-model-hint">Hold / Hover</span>
+    </div>
   );
 }
 
@@ -1075,11 +1247,7 @@ function App() {
               <div className="domain-card-grid">
                 {domain.cards.map((card) => (
                   <div key={card.name} className="domain-skill-card">
-                    <div className="skill-model-slot" aria-hidden="true">
-                      <span className="skill-model-slot-label">
-                        3D Model Slot · {card.name}
-                      </span>
-                    </div>
+                    <SkillModelSlot cardName={card.name} />
 
                     <h4 className="domain-skill-name">{card.name}</h4>
                     <p className="domain-skill-level">{card.level}</p>
@@ -1267,3 +1435,6 @@ function App() {
 }
 
 export default App;
+
+useGLTF.preload("/models/blender.glb");
+useGLTF.preload("/models/figma.glb");
