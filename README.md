@@ -4,7 +4,9 @@ Interactive developer portfolio with:
 
 - a React + Vite frontend,
 - WebGL/Three.js sections via React Three Fiber,
-- and a PostgreSQL-backed contact workflow (local Express + production serverless API).
+- a PostgreSQL-backed contact workflow (local Express + production serverless API),
+- a featured Projects section with live demo links,
+- and a dedicated Resume section with View/Download actions.
 
 ---
 
@@ -40,6 +42,12 @@ Current 3D usage includes:
 - Custom CSS (`src/App.css`) with responsive breakpoints.
 - Contact + skills + model canvases optimized for mobile layout constraints.
 - Uses modern gradients, glassmorphism-like cards, and adaptive card stacking.
+
+Recent UX updates:
+
+- Projects cards include clickable preview images and "View Live" CTA.
+- Resume section includes "View" and "Download" buttons.
+- On mobile, the solar system panel appears before the contact form for better flow.
 
 ### 4) Contact API (Local Dev)
 
@@ -79,6 +87,8 @@ Stored fields:
 - `src/components/Model.jsx` → hero model loading/animation switching.
 - `src/components/NameModel.jsx` → interactive 3D name behavior.
 - `src/components/ResonanceOrrery.jsx` → embedded 3D resonance card.
+- `src/assets/cal.png` → calculator project preview image.
+- `src/assets/todo.png` → todo app project preview image.
 - `server/index.js` → local Express contact API.
 - `api/contact.js` → production serverless contact API.
 - `vite.config.js` → dev proxy for `/api`.

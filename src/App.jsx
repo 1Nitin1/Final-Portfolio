@@ -9,6 +9,8 @@ import { Model } from "./components/Model";
 import { NameModel } from "./components/NameModel";
 import { ResonanceOrrery } from "./components/ResonanceOrrery";
 import portfolioLogo from "./assets/logo .png";
+import calculatorProjectImage from "./assets/cal.png";
+import todoProjectImage from "./assets/todo.png";
 
 const navItems = [
   { id: "home", label: "Home" },
@@ -37,6 +39,32 @@ const skillLabels = {
 };
 
 const homeRoleTitles = ["AI/ML Developer", "Web Developer", "3D Designer"];
+
+const resumeViewUrl =
+  "https://drive.google.com/file/d/1gniCu779cwb1_O3-yF54fo0YI9mmHS7o/view?usp=drivesdk";
+const resumeDownloadUrl =
+  "https://drive.google.com/uc?export=download&id=1gniCu779cwb1_O3-yF54fo0YI9mmHS7o";
+
+const projectCards = [
+  {
+    id: "calculator",
+    title: "Calculator App",
+    description:
+      "A clean and responsive calculator web app for fast arithmetic operations with a simple, user-friendly interface.",
+    image: calculatorProjectImage,
+    imageAlt: "Calculator project preview",
+    liveUrl: "https://calculator-ten-pi-89.vercel.app/",
+  },
+  {
+    id: "todo",
+    title: "Todo App",
+    description:
+      "A lightweight task manager that helps track daily work with add, update, and completion-focused todo workflows.",
+    image: todoProjectImage,
+    imageAlt: "Todo app project preview",
+    liveUrl: "https://todo-app-iota-flax.vercel.app/",
+  },
+];
 
 const skillCardModelFileMap = {
   Blender: ["blender.glb"],
@@ -1488,6 +1516,74 @@ function App() {
               </div>
             </section>
           ) : null}
+        </div>
+      </section>
+
+      <section id="projects" className="projects-section">
+        <div className="projects-shell">
+          <p className="projects-kicker">Featured Work</p>
+          <h2 className="projects-title">Projects</h2>
+
+          <div className="projects-grid">
+            {projectCards.map((project) => (
+              <article key={project.id} className="project-card">
+                <a
+                  href={project.liveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="project-image-link"
+                  aria-label={`Open ${project.title} live project`}
+                >
+                  <img
+                    src={project.image}
+                    alt={project.imageAlt}
+                    className="project-image"
+                    loading="lazy"
+                  />
+                </a>
+
+                <h3 className="project-name">{project.title}</h3>
+                <p className="project-description">{project.description}</p>
+                <a
+                  href={project.liveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="project-live-link"
+                >
+                  View Live
+                </a>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="resume" className="resume-section">
+        <div className="resume-shell">
+          <p className="resume-kicker">Career Snapshot</p>
+          <h2 className="resume-title">Resume</h2>
+          <p className="resume-subtitle">
+            View my latest resume online or download a copy directly.
+          </p>
+
+          <div className="resume-actions">
+            <a
+              href={resumeViewUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="resume-btn"
+            >
+              View
+            </a>
+            <a
+              href={resumeDownloadUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="resume-btn resume-btn-secondary"
+            >
+              Download
+            </a>
+          </div>
         </div>
       </section>
 
