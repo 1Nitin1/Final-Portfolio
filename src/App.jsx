@@ -820,6 +820,9 @@ function SkillModelSlot({ cardName }) {
   );
 }
 function App() {
+  const [isMobileWebglMode, setIsMobileWebglMode] = React.useState(false);
+  const [homeCanvasKey, setHomeCanvasKey] = React.useState(0);
+  const [nameCanvasKey, setNameCanvasKey] = React.useState(0);
   const [activeTab, setActiveTab] = React.useState("home");
   const [homeRoleIndex, setHomeRoleIndex] = React.useState(0);
   const [showGrowthTimeline, setShowGrowthTimeline] = React.useState(false);
@@ -849,6 +852,75 @@ function App() {
   const buddyOneRightPupilRef = React.useRef(null);
   const buddyTwoLeftPupilRef = React.useRef(null);
   const buddyTwoRightPupilRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia(
+      "(max-width: 900px) and (pointer: coarse)",
+    );
+
+    const syncMobileWebglMode = () => {
+      setIsMobileWebglMode(mediaQuery.matches);
+    };
+
+    syncMobileWebglMode();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", syncMobileWebglMode);
+    } else if (typeof mediaQuery.addListener === "function") {
+      mediaQuery.addListener(syncMobileWebglMode);
+    }
+
+    return () => {
+      if (typeof mediaQuery.removeEventListener === "function") {
+        mediaQuery.removeEventListener("change", syncMobileWebglMode);
+      } else if (typeof mediaQuery.removeListener === "function") {
+        mediaQuery.removeListener(syncMobileWebglMode);
+      }
+    };
+  }, []);
+
+  const attachWebglRecovery = React.useCallback((canvasElement, restart) => {
+    if (!canvasElement || canvasElement.dataset.webglRecoveryAttached === "1") {
+      return;
+    }
+
+    canvasElement.dataset.webglRecoveryAttached = "1";
+    canvasElement.addEventListener(
+      "webglcontextlost",
+      (event) => {
+        event.preventDefault();
+        window.setTimeout(() => {
+          restart();
+        }, 140);
+      },
+      { passive: false },
+    );
+  }, []);
+
+  const handleHomeCanvasCreated = React.useCallback(
+    ({ gl }) => {
+      attachWebglRecovery(gl?.domElement, () => {
+        setHomeCanvasKey((prev) => prev + 1);
+      });
+    },
+    [attachWebglRecovery],
+  );
+
+  const handleNameCanvasCreated = React.useCallback(
+    ({ gl }) => {
+      attachWebglRecovery(gl?.domElement, () => {
+        setNameCanvasKey((prev) => prev + 1);
+      });
+    },
+    [attachWebglRecovery],
+  );
 
   React.useEffect(() => {
     gsap.fromTo(
@@ -1450,7 +1522,18 @@ function App() {
 
       <section id="home" className="home-hero">
         <div className="home-hero-canvas" aria-hidden="true">
-          <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
+          <Canvas
+            key={homeCanvasKey}
+            camera={{ position: [0, 0, 8], fov: 50 }}
+            dpr={isMobileWebglMode ? [1, 1.2] : [1, 2]}
+            gl={{
+              antialias: !isMobileWebglMode,
+              powerPreference: isMobileWebglMode
+                ? "low-power"
+                : "high-performance",
+            }}
+            onCreated={handleHomeCanvasCreated}
+          >
             <ambientLight intensity={0.8} />
             <directionalLight position={[4, 5, 5]} intensity={1.15} />
             <pointLight
@@ -1499,7 +1582,18 @@ function App() {
               onPointerCancel={handleNameCanvasPointerCancel}
               onPointerLeave={handleNameCanvasPointerCancel}
             >
-              <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+              <Canvas
+                key={nameCanvasKey}
+                camera={{ position: [0, 0, 5], fov: 45 }}
+                dpr={isMobileWebglMode ? [1, 1.2] : [1, 2]}
+                gl={{
+                  antialias: !isMobileWebglMode,
+                  powerPreference: isMobileWebglMode
+                    ? "low-power"
+                    : "high-performance",
+                }}
+                onCreated={handleNameCanvasCreated}
+              >
                 <ambientLight intensity={0.9} />
                 <directionalLight position={[2, 2, 4]} intensity={1.1} />
                 <Suspense fallback={null}>

@@ -53,6 +53,7 @@ Recent UX updates:
 - Resume section also supports "Get Emailed" with email input + submit.
 - On mobile, the solar system panel appears before the contact form for better flow.
 - On mobile, holding anywhere on a skill model canvas activates hold interaction for all models in that card.
+- Home and Name 3D canvases include production-safe mobile WebGL recovery + lower GPU settings to prevent white/dead canvas states.
 
 ### 4) Contact API (Local Dev)
 
