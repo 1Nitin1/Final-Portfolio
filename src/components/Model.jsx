@@ -4,27 +4,18 @@ Command: npx gltfjsx@6.5.3 public/models/Untitled.glb -o Model.jsx
 */
 
 import React from "react";
-import { useFrame, useGraph } from "@react-three/fiber";
 import { useGLTF, useAnimations, useFBX } from "@react-three/drei";
 import { SkeletonUtils } from "three-stdlib";
 
 export function Model(props) {
   const { isHovered = false, ...restProps } = props;
-  const group = React.useRef();
+  const modelRootRef = React.useRef(null);
   const activeActionRef = React.useRef(null);
+  const [isAnimationReady, setIsAnimationReady] = React.useState(false);
   const { scene } = useGLTF("/models/Untitled.glb");
   const idleFbx = useFBX("/animations/Breathing Idle.fbx");
   const greetingFbx = useFBX("/animations/Standing Greeting.fbx");
   const clone = React.useMemo(() => SkeletonUtils.clone(scene), [scene]);
-  const { nodes, materials } = useGraph(clone);
-  const hasExpectedRig =
-    !!nodes?.mixamorigHips &&
-    !!nodes?.vanguard_Mesh?.geometry &&
-    !!nodes?.vanguard_Mesh?.skeleton &&
-    !!nodes?.vanguard_visor?.geometry &&
-    !!nodes?.vanguard_visor?.skeleton &&
-    !!materials?.VanguardBodyMat &&
-    !!materials?.Vanguard_VisorMat;
 
   const animationClips = React.useMemo(() => {
     const clips = [];
@@ -44,33 +35,49 @@ export function Model(props) {
     return clips;
   }, [idleFbx, greetingFbx]);
 
-  const { actions } = useAnimations(animationClips, group);
+  const { actions, mixer } = useAnimations(animationClips, modelRootRef);
   const idleAction = actions?.["Breathing Idle"] || null;
   const greetingAction = actions?.["Standing Greeting"] || null;
 
-  const switchAction = React.useCallback((nextAction) => {
-    if (!nextAction || activeActionRef.current === nextAction) {
-      return;
-    }
+  React.useEffect(() => {
+    activeActionRef.current = null;
+    setIsAnimationReady(false);
+  }, [clone]);
 
-    if (
-      activeActionRef.current &&
-      typeof activeActionRef.current.fadeOut === "function"
-    ) {
-      activeActionRef.current.fadeOut(0.22);
-    }
+  const switchAction = React.useCallback(
+    (nextAction) => {
+      if (!nextAction || activeActionRef.current === nextAction) {
+        return;
+      }
 
-    if (
-      typeof nextAction.reset === "function" &&
-      typeof nextAction.fadeIn === "function" &&
-      typeof nextAction.play === "function"
-    ) {
-      nextAction.reset().fadeIn(0.22).play();
-      activeActionRef.current = nextAction;
-    }
-  }, []);
+      if (
+        activeActionRef.current &&
+        typeof activeActionRef.current.fadeOut === "function"
+      ) {
+        activeActionRef.current.fadeOut(0.2);
+      }
 
-  useFrame(() => {
+      if (
+        typeof nextAction.reset === "function" &&
+        typeof nextAction.fadeIn === "function" &&
+        typeof nextAction.play === "function"
+      ) {
+        nextAction.reset().fadeIn(0.2).play();
+        activeActionRef.current = nextAction;
+
+        if (mixer && typeof mixer.update === "function") {
+          mixer.update(0);
+        }
+
+        requestAnimationFrame(() => {
+          setIsAnimationReady(true);
+        });
+      }
+    },
+    [mixer],
+  );
+
+  React.useEffect(() => {
     const availableActions = Object.values(actions || {}).filter(
       (action) => action && typeof action.play === "function",
     );
@@ -85,7 +92,7 @@ export function Model(props) {
       : idleAction || greetingAction || fallbackAction;
 
     switchAction(nextAction);
-  });
+  }, [actions, idleAction, greetingAction, isHovered, switchAction]);
 
   React.useEffect(() => {
     return () => {
@@ -98,28 +105,13 @@ export function Model(props) {
   }, [actions]);
 
   return (
-    <group ref={group} {...restProps} dispose={null}>
-      {hasExpectedRig ? (
-        <group name="Scene">
-          <group name="Armature" rotation={[Math.PI / 2, 0, 0]} scale={0.01}>
-            <primitive object={nodes.mixamorigHips} />
-            <skinnedMesh
-              name="vanguard_Mesh"
-              geometry={nodes.vanguard_Mesh.geometry}
-              material={materials.VanguardBodyMat}
-              skeleton={nodes.vanguard_Mesh.skeleton}
-            />
-            <skinnedMesh
-              name="vanguard_visor"
-              geometry={nodes.vanguard_visor.geometry}
-              material={materials.Vanguard_VisorMat}
-              skeleton={nodes.vanguard_visor.skeleton}
-            />
-          </group>
-        </group>
-      ) : (
-        <primitive object={clone} />
-      )}
+    <group
+      ref={modelRootRef}
+      {...restProps}
+      dispose={null}
+      visible={isAnimationReady}
+    >
+      <primitive object={clone} />
     </group>
   );
 }

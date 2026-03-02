@@ -2,11 +2,12 @@ import React, { Suspense } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import { gsap } from "gsap";
-import { Color } from "three";
+import { Box3, Color, Vector3 } from "three";
 import Snowfall from "react-snowfall";
 import "./App.css";
 import { Model } from "./components/Model";
 import { NameModel } from "./components/NameModel";
+import { ResonanceOrrery } from "./components/ResonanceOrrery";
 import portfolioLogo from "./assets/logo .png";
 
 const navItems = [
@@ -36,6 +37,113 @@ const skillLabels = {
 };
 
 const homeRoleTitles = ["AI/ML Developer", "Web Developer", "3D Designer"];
+
+const skillCardModelFileMap = {
+  Blender: ["blender.glb"],
+  Figma: ["figma.glb"],
+  "Python ML Stack": ["python.glb", "numpy.glb", "pandas.glb"],
+  "Model Evaluation": ["tensorflow.glb"],
+  Frontend: ["html.glb", "css.glb", "js.glb", "react.glb"],
+  "Backend Basics": [
+    "expressjs.glb",
+    "nodejs.glb",
+    "docker.glb",
+    "kubernetes.glb",
+    "postmanapi.glb",
+  ],
+};
+
+const skillModelOverridesByFile = {
+  "blender.glb": {
+    baseScale: 10,
+    position: [0, -0.05, 0],
+  },
+  "figma.glb": {
+    baseScale: 11.5,
+    position: [0, 0, 0],
+  },
+  "python.glb": {
+    baseScale: 8.4,
+    position: [0, -0.1, 0],
+  },
+  "numpy.glb": {
+    baseScale: 8.2,
+    position: [0, -0.14, 0],
+  },
+  "pandas.glb": {
+    baseScale: 8.2,
+    position: [0, -0.14, 0],
+  },
+  "tensorflow.glb": {
+    baseScale: 9,
+    position: [0, -0.08, 0],
+  },
+  "react.glb": {
+    baseScale: 8.4,
+    position: [0, -0.1, 0],
+  },
+  "html.glb": {
+    baseScale: 8,
+    position: [0, -0.12, 0],
+  },
+  "css.glb": {
+    baseScale: 8,
+    position: [0, -0.12, 0],
+  },
+  "expressjs.glb": {
+    initialRotation: [0, 0, 0],
+    baseScale: 9,
+    position: [0, -0.1, 0],
+  },
+  "nodejs.glb": {
+    baseScale: 7.5,
+    position: [0, -0.12, 0],
+  },
+  "docker.glb": {
+    baseScale: 8.1,
+    position: [0, -0.13, 0],
+  },
+  "kubernetes.glb": {
+    baseScale: 8,
+    position: [0, -0.14, 0],
+  },
+  "postmanapi.glb": {
+    baseScale: 7.5,
+    position: [0, -0.1, 0],
+  },
+  "js.glb": {
+    baseScale: 7.5,
+    position: [0, -0.1, 0],
+  },
+};
+
+function getSideBySideOffsets(count) {
+  const presetOffsets = {
+    1: [0],
+    2: [-1.6, 1.6],
+    3: [-2.5, 0, 2.5],
+    4: [-3.5, -1.1, 1.1, 3.5],
+    5: [-4, -2, 0, 2, 4],
+  };
+
+  if (presetOffsets[count]) {
+    return presetOffsets[count];
+  }
+
+  const spacing = 1.9;
+  const start = -((count - 1) * spacing) / 2;
+  return Array.from({ length: count }, (_, index) => start + spacing * index);
+}
+
+const defaultSkillModelVisualConfig = {
+  cameraPosition: [0, 0, 4.4],
+  fov: 44,
+  ambientIntensity: 1.8,
+  lightBoost: 1.25,
+  baseScale: 9,
+  position: [0, 0, 0],
+  initialRotation: [0, 0, 0],
+};
 
 const skillModelConfig = {
   Blender: {
@@ -71,13 +179,13 @@ const skillDomains = [
         name: "Blender",
         level: "3D Design & Asset Workflow",
         description:
-          "I can model clean assets, create basic materials, set lighting, and prepare scene-ready objects for web and portfolio use.",
+          "I create and optimize 3D assets in Blender, including modeling, UV/material setup, and export to GLB for web scenes in Three.js and React Three Fiber.",
       },
       {
         name: "Figma",
         level: "UI/UX Design",
         description:
-          "I design interface layouts, create component-based systems, and structure user flows that are developer-friendly and scalable.",
+          "I design clean UI systems in Figma with reusable components, Auto Layout, and design tokens, then hand off specs that map smoothly into React + CSS implementations.",
       },
     ],
   },
@@ -91,13 +199,13 @@ const skillDomains = [
         name: "Python ML Stack",
         level: "Data & Model Building",
         description:
-          "Comfortable with preprocessing, feature handling, and training classic ML models using structured datasets and evaluation metrics.",
+          "Using Python with NumPy and Pandas, I handle cleaning, transformation, and feature prep, plus notebook-based analysis in Jupyter and visualization with Matplotlib/Seaborn.",
       },
       {
         name: "Model Evaluation",
         level: "Experiment & Iteration",
         description:
-          "I compare models, inspect errors, and iterate on hyperparameters to improve performance in a measurable way.",
+          "With TensorFlow workflows, I run training experiments, compare metrics, and iterate on architecture/hyperparameters while tracking runs and validating results with scikit-learn metrics.",
       },
     ],
   },
@@ -111,13 +219,13 @@ const skillDomains = [
         name: "Frontend",
         level: "React & UI Systems",
         description:
-          "I build modular React interfaces, connect animations/interactions, and maintain consistent styling for production-ready pages.",
+          "I build frontend interfaces with React, HTML, CSS, and JavaScript, and use Vite, GSAP, and responsive layout patterns to deliver smooth, production-ready UI interactions.",
       },
       {
         name: "Backend Basics",
         level: "API & App Logic",
         description:
-          "I handle routing, request-response patterns, and integration workflows to support complete end-to-end web features.",
+          "I work with Express and Node.js for APIs, test endpoints with Postman, manage data using PostgreSQL/Neon, and use Docker/Kubernetes basics for containerized backend workflows.",
       },
     ],
   },
@@ -422,6 +530,16 @@ function InteractiveSkillModel({
   const isActive = isHovered || isHeld;
   const { scene } = useGLTF(modelPath);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
+  const centeredSceneOffset = React.useMemo(() => {
+    const bounds = new Box3().setFromObject(clonedScene);
+    if (!Number.isFinite(bounds.min.x)) {
+      return [0, 0, 0];
+    }
+
+    const center = new Vector3();
+    bounds.getCenter(center);
+    return [-center.x, -center.y, -center.z];
+  }, [clonedScene]);
 
   React.useEffect(() => {
     const applyBoost = (material) => {
@@ -509,16 +627,39 @@ function InteractiveSkillModel({
           setIsHeld(false);
         }}
       >
-        <primitive object={clonedScene} />
+        <primitive object={clonedScene} position={centeredSceneOffset} />
       </group>
     </group>
   );
 }
 
 function SkillModelSlot({ cardName }) {
-  const config = skillModelConfig[cardName];
+  const modelFileNames = skillCardModelFileMap[cardName] || [];
+  const [viewportWidth, setViewportWidth] = React.useState(() =>
+    typeof window === "undefined" ? 1200 : window.innerWidth,
+  );
 
-  if (!config) {
+  React.useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleResize = () => {
+      setViewportWidth(window.innerWidth);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  const baseCardConfig = {
+    ...defaultSkillModelVisualConfig,
+    ...(skillModelConfig[cardName] || {}),
+  };
+
+  if (!modelFileNames.length) {
     return (
       <div className="skill-model-slot" aria-hidden="true">
         <span className="skill-model-slot-label">
@@ -528,13 +669,45 @@ function SkillModelSlot({ cardName }) {
     );
   }
 
+  const isMulti = modelFileNames.length > 1;
+  const modelCount = modelFileNames.length;
+  const baseOffsets = getSideBySideOffsets(modelCount);
+
+  const spacingCompression =
+    viewportWidth <= 420
+      ? 0.78
+      : viewportWidth <= 560
+        ? 0.84
+        : viewportWidth <= 760
+          ? 0.9
+          : viewportWidth <= 960
+            ? 0.95
+            : 1;
+
+  const cameraDistanceBoost =
+    (modelCount >= 4 ? 1 : modelCount === 3 ? 0.6 : 0) +
+    (viewportWidth <= 560 ? 1 : viewportWidth <= 760 ? 0.55 : 0);
+
+  const cameraFovBoost =
+    viewportWidth <= 560 ? 6 : viewportWidth <= 760 ? 3 : 0;
+
   return (
-    <div className="skill-model-slot" aria-hidden="true">
+    <div
+      className={`skill-model-slot ${isMulti ? "multi" : "single"}`}
+      aria-hidden="true"
+    >
       <Canvas
         className="skill-model-canvas"
-        camera={{ position: config.cameraPosition, fov: config.fov }}
+        camera={{
+          position: [
+            baseCardConfig.cameraPosition[0],
+            baseCardConfig.cameraPosition[1],
+            baseCardConfig.cameraPosition[2] + cameraDistanceBoost,
+          ],
+          fov: baseCardConfig.fov + cameraFovBoost,
+        }}
       >
-        <ambientLight intensity={config.ambientIntensity ?? 0.78} />
+        <ambientLight intensity={baseCardConfig.ambientIntensity ?? 0.78} />
         <hemisphereLight
           intensity={1.05}
           color="#fff2ff"
@@ -543,20 +716,31 @@ function SkillModelSlot({ cardName }) {
         <directionalLight position={[2.5, 3, 2.5]} intensity={1.4} />
         <pointLight position={[-2, 1.2, 2]} intensity={1.15} color="#c99bff" />
         <Suspense fallback={null}>
-          <InteractiveSkillModel
-            modelPath={config.modelPath}
-            baseScale={config.baseScale}
-            position={config.position}
-            initialRotation={config.initialRotation}
-            lightBoost={config.lightBoost}
-          />
+          {modelFileNames.map((modelFileName, index) => {
+            const perFileConfig = {
+              ...baseCardConfig,
+              ...(skillModelOverridesByFile[modelFileName] || {}),
+            };
+            const [baseX, baseY, baseZ] = perFileConfig.position;
+            const adjustedXOffset = baseOffsets[index] * spacingCompression;
+
+            return (
+              <InteractiveSkillModel
+                key={`${cardName}-${modelFileName}`}
+                modelPath={`/models/${modelFileName}`}
+                baseScale={perFileConfig.baseScale}
+                position={[baseX + adjustedXOffset, baseY, baseZ]}
+                initialRotation={perFileConfig.initialRotation}
+                lightBoost={perFileConfig.lightBoost}
+              />
+            );
+          })}
         </Suspense>
       </Canvas>
       <span className="skill-model-hint">Hold / Hover</span>
     </div>
   );
 }
-
 function App() {
   const [activeTab, setActiveTab] = React.useState("home");
   const [homeRoleIndex, setHomeRoleIndex] = React.useState(0);
@@ -747,7 +931,9 @@ function App() {
     if (typeof event.currentTarget.releasePointerCapture === "function") {
       try {
         event.currentTarget.releasePointerCapture(event.pointerId);
-      } catch {}
+      } catch {
+        return;
+      }
     }
 
     if (event.pointerType === "touch") {
@@ -769,7 +955,9 @@ function App() {
     if (typeof event.currentTarget.releasePointerCapture === "function") {
       try {
         event.currentTarget.releasePointerCapture(event.pointerId);
-      } catch {}
+      } catch {
+        return;
+      }
     }
   };
 
@@ -787,7 +975,9 @@ function App() {
     if (typeof event.currentTarget.releasePointerCapture === "function") {
       try {
         event.currentTarget.releasePointerCapture(event.pointerId);
-      } catch {}
+      } catch {
+        return;
+      }
     }
   };
 
@@ -797,7 +987,9 @@ function App() {
     if (typeof event.currentTarget.releasePointerCapture === "function") {
       try {
         event.currentTarget.releasePointerCapture(event.pointerId);
-      } catch {}
+      } catch {
+        return;
+      }
     }
   };
 
@@ -1168,7 +1360,7 @@ function App() {
                 <directionalLight position={[2, 2, 4]} intensity={1.1} />
                 <Suspense fallback={null}>
                   <NameModel
-                    position={[-5.5, -0.5, 0]}
+                    position={[-4.8, -0.5, 0]}
                     rotation={[Math.PI / 2, 0, 0]}
                     scale={1.8}
                     mobileHoldActive={isNameContainerHeld}
@@ -1300,134 +1492,148 @@ function App() {
       </section>
 
       <section id="contact" className="contact-section">
-        <div
-          ref={contactCardRef}
-          className="contact-card"
-          onPointerMove={handleCardMove}
-          onPointerLeave={handleCardLeave}
-        >
-          <p className="contact-kicker contact-animate">Get In Touch</p>
-          <h2 className="contact-title contact-animate">
-            Let&apos;s Build Something Great
-          </h2>
-          <p className="contact-subtitle contact-animate">
-            Share your project idea, timeline, and goals. I&apos;ll get back to
-            you soon.
-          </p>
+        <div className="contact-layout">
+          <div
+            ref={contactCardRef}
+            className="contact-card"
+            onPointerMove={handleCardMove}
+            onPointerLeave={handleCardLeave}
+          >
+            <p className="contact-kicker contact-animate">Get In Touch</p>
+            <h2 className="contact-title contact-animate">
+              Open to Roles & Freelance Projects
+            </h2>
+            <p className="contact-subtitle contact-animate">
+              Recruiters, hiring managers, and clients can reach out here for
+              full-time roles, internships, or freelance collaborations.
+            </p>
 
-          <div className="contact-form-shell contact-animate">
-            <div className="buddy-stack" aria-hidden="true">
-              <div ref={sneakyRectRef} className="sneaky-rect playful">
-                <div className="sneaky-eyes">
-                  <span className="sneaky-eye">
-                    <span ref={leftPupilRef} className="sneaky-pupil" />
-                  </span>
-                  <span className="sneaky-eye">
-                    <span ref={rightPupilRef} className="sneaky-pupil" />
-                  </span>
+            <div className="contact-form-shell contact-animate">
+              <div className="buddy-stack" aria-hidden="true">
+                <div ref={sneakyRectRef} className="sneaky-rect playful">
+                  <div className="sneaky-eyes">
+                    <span className="sneaky-eye">
+                      <span ref={leftPupilRef} className="sneaky-pupil" />
+                    </span>
+                    <span className="sneaky-eye">
+                      <span ref={rightPupilRef} className="sneaky-pupil" />
+                    </span>
+                  </div>
+                  <span className="sneaky-mouth playful" />
+                  <span className="buddy-wave" />
                 </div>
-                <span className="sneaky-mouth playful" />
-                <span className="buddy-wave" />
+
+                <div ref={buddyOneRef} className="buddy-mini buddy-mini-one">
+                  <span className="buddy-mini-eye">
+                    <span
+                      ref={buddyOneLeftPupilRef}
+                      className="buddy-mini-pupil"
+                    />
+                  </span>
+                  <span className="buddy-mini-eye">
+                    <span
+                      ref={buddyOneRightPupilRef}
+                      className="buddy-mini-pupil"
+                    />
+                  </span>
+                  <span className="buddy-mini-smile" />
+                </div>
+
+                <div ref={buddyTwoRef} className="buddy-mini buddy-mini-two">
+                  <span className="buddy-mini-eye">
+                    <span
+                      ref={buddyTwoLeftPupilRef}
+                      className="buddy-mini-pupil"
+                    />
+                  </span>
+                  <span className="buddy-mini-eye">
+                    <span
+                      ref={buddyTwoRightPupilRef}
+                      className="buddy-mini-pupil"
+                    />
+                  </span>
+                  <span className="buddy-mini-smile" />
+                </div>
               </div>
 
-              <div ref={buddyOneRef} className="buddy-mini buddy-mini-one">
-                <span className="buddy-mini-eye">
-                  <span
-                    ref={buddyOneLeftPupilRef}
-                    className="buddy-mini-pupil"
-                  />
-                </span>
-                <span className="buddy-mini-eye">
-                  <span
-                    ref={buddyOneRightPupilRef}
-                    className="buddy-mini-pupil"
-                  />
-                </span>
-                <span className="buddy-mini-smile" />
-              </div>
+              <form className="contact-form" onSubmit={handleContactSubmit}>
+                <label className="contact-label" htmlFor="name">
+                  Your Name
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  className="contact-input"
+                  placeholder="Full name"
+                  required
+                  onFocus={handleFieldFocus}
+                  onInput={handleFieldInput}
+                  onBlur={handleFieldBlur}
+                />
 
-              <div ref={buddyTwoRef} className="buddy-mini buddy-mini-two">
-                <span className="buddy-mini-eye">
-                  <span
-                    ref={buddyTwoLeftPupilRef}
-                    className="buddy-mini-pupil"
-                  />
-                </span>
-                <span className="buddy-mini-eye">
-                  <span
-                    ref={buddyTwoRightPupilRef}
-                    className="buddy-mini-pupil"
-                  />
-                </span>
-                <span className="buddy-mini-smile" />
-              </div>
-            </div>
+                <label className="contact-label" htmlFor="email">
+                  Work Email
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  className="contact-input"
+                  placeholder="name@company.com"
+                  required
+                  onFocus={handleFieldFocus}
+                  onInput={handleFieldInput}
+                  onBlur={handleFieldBlur}
+                />
 
-            <form className="contact-form" onSubmit={handleContactSubmit}>
-              <label className="contact-label" htmlFor="name">
-                Name
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                className="contact-input"
-                placeholder="Your name"
-                required
-                onFocus={handleFieldFocus}
-                onInput={handleFieldInput}
-                onBlur={handleFieldBlur}
-              />
+                <label className="contact-label" htmlFor="message">
+                  Opportunity Details
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  className="contact-input contact-textarea"
+                  placeholder="Role or project scope, timeline, and any key expectations..."
+                  rows={5}
+                  required
+                  onFocus={handleFieldFocus}
+                  onInput={handleFieldInput}
+                  onBlur={handleFieldBlur}
+                />
 
-              <label className="contact-label" htmlFor="email">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                className="contact-input"
-                placeholder="your@email.com"
-                required
-                onFocus={handleFieldFocus}
-                onInput={handleFieldInput}
-                onBlur={handleFieldBlur}
-              />
-
-              <label className="contact-label" htmlFor="message">
-                Message
-              </label>
-              <textarea
-                id="message"
-                name="message"
-                className="contact-input contact-textarea"
-                placeholder="Tell me about your project..."
-                rows={5}
-                required
-                onFocus={handleFieldFocus}
-                onInput={handleFieldInput}
-                onBlur={handleFieldBlur}
-              />
-
-              <button
-                type="submit"
-                className="contact-submit"
-                disabled={isContactSubmitting}
-              >
-                {isContactSubmitting ? "Sending..." : "Send Message"}
-              </button>
-
-              {contactSubmitMessage ? (
-                <p
-                  className={`contact-feedback ${contactSubmitStatus === "success" ? "success" : "error"}`}
-                  role="status"
-                  aria-live="polite"
+                <button
+                  type="submit"
+                  className="contact-submit"
+                  disabled={isContactSubmitting}
                 >
-                  {contactSubmitMessage}
-                </p>
-              ) : null}
-            </form>
+                  {isContactSubmitting ? "Sending..." : "Send Inquiry"}
+                </button>
+
+                {contactSubmitMessage ? (
+                  <p
+                    className={`contact-feedback ${contactSubmitStatus === "success" ? "success" : "error"}`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {contactSubmitMessage}
+                  </p>
+                ) : null}
+              </form>
+            </div>
           </div>
+
+          <aside
+            className="contact-casual-card"
+            aria-label="Casual resonance panel"
+          >
+            <div
+              className="contact-orrery-panel"
+              aria-label="Interactive celestial resonance canvas"
+            >
+              <ResonanceOrrery />
+            </div>
+          </aside>
         </div>
       </section>
     </div>
@@ -1438,3 +1644,16 @@ export default App;
 
 useGLTF.preload("/models/blender.glb");
 useGLTF.preload("/models/figma.glb");
+useGLTF.preload("/models/python.glb");
+useGLTF.preload("/models/tensorflow.glb");
+useGLTF.preload("/models/react.glb");
+useGLTF.preload("/models/expressjs.glb");
+useGLTF.preload("/models/numpy.glb");
+useGLTF.preload("/models/pandas.glb");
+useGLTF.preload("/models/html.glb");
+useGLTF.preload("/models/css.glb");
+useGLTF.preload("/models/js.glb");
+useGLTF.preload("/models/nodejs.glb");
+useGLTF.preload("/models/docker.glb");
+useGLTF.preload("/models/kubernetes.glb");
+useGLTF.preload("/models/postmanapi.glb");
