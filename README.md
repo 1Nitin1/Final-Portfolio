@@ -17,12 +17,14 @@ Interactive developer portfolio with:
 - **React 19**: component-driven UI, stateful interactions, section navigation, and conditional rendering.
 - **Vite 7**: fast development server + production bundling.
 - **GSAP**: scroll reveal, motion polish, and interaction transitions.
+- **Vercel Analytics**: lightweight page analytics for production usage insights.
 
 Why this matters:
 
 - React keeps page sections modular and maintainable.
 - Vite keeps local iteration fast.
 - GSAP provides smooth animation without heavy custom animation code.
+- Vercel Analytics provides deployment-native traffic visibility.
 
 ### 2) 3D / WebGL Layer
 
@@ -84,6 +86,7 @@ Stored fields:
 
 - `src/App.jsx` → main page layout, sections, interactions.
 - `src/App.css` → global styling and responsive behavior.
+- `src/main.jsx` → app bootstrap and Vercel Analytics mount.
 - `src/components/Model.jsx` → hero model loading/animation switching.
 - `src/components/NameModel.jsx` → interactive 3D name behavior.
 - `src/components/ResonanceOrrery.jsx` → embedded 3D resonance card.
