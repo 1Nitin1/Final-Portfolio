@@ -551,11 +551,12 @@ function InteractiveSkillModel({
   position,
   initialRotation,
   lightBoost = 1,
+  forceActive = false,
 }) {
   const modelGroupRef = React.useRef(null);
   const [isHovered, setIsHovered] = React.useState(false);
   const [isHeld, setIsHeld] = React.useState(false);
-  const isActive = isHovered || isHeld;
+  const isActive = forceActive || isHovered || isHeld;
   const { scene } = useGLTF(modelPath);
   const clonedScene = React.useMemo(() => scene.clone(), [scene]);
   const centeredSceneOffset = React.useMemo(() => {
@@ -666,6 +667,7 @@ function SkillModelSlot({ cardName }) {
   const [viewportWidth, setViewportWidth] = React.useState(() =>
     typeof window === "undefined" ? 1200 : window.innerWidth,
   );
+  const [isCanvasHeld, setIsCanvasHeld] = React.useState(false);
 
   React.useEffect(() => {
     if (typeof window === "undefined") {
@@ -718,11 +720,58 @@ function SkillModelSlot({ cardName }) {
 
   const cameraFovBoost =
     viewportWidth <= 560 ? 6 : viewportWidth <= 760 ? 3 : 0;
+  const isMobileCanvasView = viewportWidth <= 760;
+
+  const handleSlotPointerDown = (event) => {
+    if (!isMobileCanvasView) {
+      return;
+    }
+
+    setIsCanvasHeld(true);
+
+    if (typeof event.currentTarget.setPointerCapture === "function") {
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        return;
+      }
+    }
+  };
+
+  const handleSlotPointerUp = (event) => {
+    setIsCanvasHeld(false);
+
+    if (typeof event.currentTarget.releasePointerCapture === "function") {
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {
+        return;
+      }
+    }
+  };
+
+  const handleSlotPointerCancel = (event) => {
+    setIsCanvasHeld(false);
+
+    if (typeof event.currentTarget.releasePointerCapture === "function") {
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {
+        return;
+      }
+    }
+  };
 
   return (
     <div
       className={`skill-model-slot ${isMulti ? "multi" : "single"}`}
       aria-hidden="true"
+      onPointerDown={handleSlotPointerDown}
+      onPointerUp={handleSlotPointerUp}
+      onPointerCancel={handleSlotPointerCancel}
+      onPointerLeave={() => {
+        setIsCanvasHeld(false);
+      }}
     >
       <Canvas
         className="skill-model-canvas"
@@ -760,6 +809,7 @@ function SkillModelSlot({ cardName }) {
                 position={[baseX + adjustedXOffset, baseY, baseZ]}
                 initialRotation={perFileConfig.initialRotation}
                 lightBoost={perFileConfig.lightBoost}
+                forceActive={isMobileCanvasView && isCanvasHeld}
               />
             );
           })}

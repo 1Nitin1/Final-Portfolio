@@ -52,6 +52,7 @@ Recent UX updates:
 - Resume section includes "View" and "Download" buttons.
 - Resume section also supports "Get Emailed" with email input + submit.
 - On mobile, the solar system panel appears before the contact form for better flow.
+- On mobile, holding anywhere on a skill model canvas activates hold interaction for all models in that card.
 
 ### 4) Contact API (Local Dev)
 
