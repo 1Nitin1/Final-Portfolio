@@ -39,17 +39,20 @@ async function sendResumeEmail({ email }) {
   }
 
   const mailFrom = process.env.MAIL_FROM || process.env.SMTP_USER;
+  const resumePdfUrl =
+    process.env.RESUME_PDF_URL ||
+    "https://drive.google.com/uc?export=download&id=1gniCu779cwb1_O3-yF54fo0YI9mmHS7o";
   const subject = "Your requested resume - Nitin Baranwal";
   const text = [
-    "Hi there,",
+    "Hi,",
     "",
     "Thanks for requesting my resume.",
     "",
-    "View Resume:",
-    "https://drive.google.com/file/d/1gniCu779cwb1_O3-yF54fo0YI9mmHS7o/view?usp=drivesdk",
+    "This is an automated email from my portfolio. I have attached my latest resume as a PDF.",
+    "I am Nitin Baranwal, a Computer Science student and developer focused on web development, 3D experiences, and AI/ML.",
     "",
-    "Download Resume:",
-    "https://drive.google.com/uc?export=download&id=1gniCu779cwb1_O3-yF54fo0YI9mmHS7o",
+    "If the attachment does not open, you can use this backup link:",
+    "https://drive.google.com/file/d/1gniCu779cwb1_O3-yF54fo0YI9mmHS7o/view?usp=drivesdk",
     "",
     "Best regards,",
     "Nitin Baranwal",
@@ -58,14 +61,11 @@ async function sendResumeEmail({ email }) {
   const html = `
     <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
       <h2 style="margin: 0 0 12px; color: #111827;">Resume Request</h2>
-      <p style="margin: 0 0 12px;">Hi there,</p>
-      <p style="margin: 0 0 12px;">Thanks for requesting my resume.</p>
-      <p style="margin: 0 0 8px;">
-        <a href="https://drive.google.com/file/d/1gniCu779cwb1_O3-yF54fo0YI9mmHS7o/view?usp=drivesdk" target="_blank" rel="noreferrer">View Resume</a>
-      </p>
-      <p style="margin: 0 0 12px;">
-        <a href="https://drive.google.com/uc?export=download&id=1gniCu779cwb1_O3-yF54fo0YI9mmHS7o" target="_blank" rel="noreferrer">Download Resume</a>
-      </p>
+      <p style="margin: 0 0 10px;">Hi,</p>
+      <p style="margin: 0 0 10px;">Thanks for requesting my resume.</p>
+      <p style="margin: 0 0 10px;">This is an automated email from my portfolio. My latest resume is attached as a PDF.</p>
+      <p style="margin: 0 0 10px;">I am Nitin Baranwal, a Computer Science student and developer focused on web development, 3D experiences, and AI/ML.</p>
+      <p style="margin: 0 0 10px;">If the attachment does not open, use this backup link: <a href="https://drive.google.com/file/d/1gniCu779cwb1_O3-yF54fo0YI9mmHS7o/view?usp=drivesdk" target="_blank" rel="noreferrer">View Resume</a></p>
       <p style="margin: 0;">Best regards,<br />Nitin Baranwal</p>
     </div>
   `;
@@ -76,6 +76,13 @@ async function sendResumeEmail({ email }) {
     subject,
     text,
     html,
+    attachments: [
+      {
+        filename: "Nitin-Baranwal-Resume.pdf",
+        path: resumePdfUrl,
+        contentType: "application/pdf",
+      },
+    ],
   });
 
   return { sent: true };

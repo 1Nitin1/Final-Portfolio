@@ -139,6 +139,55 @@ async function sendContactNotification({
     html,
   });
 
+  const resumePdfUrl =
+    process.env.RESUME_PDF_URL ||
+    "https://drive.google.com/uc?export=download&id=1gniCu779cwb1_O3-yF54fo0YI9mmHS7o";
+
+  const autoReplySubject = "Thanks for reaching out — Nitin Baranwal";
+  const autoReplyText = [
+    `Hi ${name},`,
+    "",
+    "Thanks for reaching out through my portfolio.",
+    "",
+    "I am Nitin Baranwal, a Computer Science student and developer focused on modern web development, 3D experiences, and AI/ML learning.",
+    "",
+    "This is an automated message to confirm that I received your inquiry.",
+    "I will be sure to reply within the next 48 business hours.",
+    "",
+    "I have attached my resume for your reference.",
+    "",
+    "Best regards,",
+    "Nitin Baranwal",
+  ].join("\n");
+
+  const autoReplyHtml = `
+    <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
+      <h2 style="margin: 0 0 12px; color: #111827;">Thanks for reaching out</h2>
+      <p style="margin: 0 0 10px;">Hi ${name},</p>
+      <p style="margin: 0 0 10px;">Thanks for contacting me through my portfolio.</p>
+      <p style="margin: 0 0 10px;">I am Nitin Baranwal, a Computer Science student and developer focused on modern web development, 3D experiences, and AI/ML learning.</p>
+      <p style="margin: 0 0 10px;">This is an automated confirmation that your message has been received.</p>
+      <p style="margin: 0 0 10px;"><strong>I will be sure to reply within the next 48 business hours.</strong></p>
+      <p style="margin: 0 0 10px;">My resume is attached for your reference.</p>
+      <p style="margin: 0;">Best regards,<br />Nitin Baranwal</p>
+    </div>
+  `;
+
+  await mailer.sendMail({
+    from: mailFrom,
+    to: email,
+    subject: autoReplySubject,
+    text: autoReplyText,
+    html: autoReplyHtml,
+    attachments: [
+      {
+        filename: "Nitin-Baranwal-Resume.pdf",
+        path: resumePdfUrl,
+        contentType: "application/pdf",
+      },
+    ],
+  });
+
   return { sent: true };
 }
 

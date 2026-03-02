@@ -76,6 +76,8 @@ Stored fields:
 - **nodemailer** for contact submission notifications.
 - SMTP-driven setup (`SMTP_*`, `MAIL_FROM`, `MAIL_TO`).
 - If SMTP is not configured, submissions are still saved to DB.
+- Contact submissions now also trigger an automated acknowledgement email to the sender.
+- Both acknowledgement and Get Emailed flows can attach resume PDF using `RESUME_PDF_URL`.
 
 ### 7) Production API Path
 
@@ -148,6 +150,7 @@ Use either:
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`
 - `SMTP_USER`, `SMTP_PASS`
 - `MAIL_FROM`, `MAIL_TO`
+- `RESUME_PDF_URL` (public direct PDF URL for email attachment source)
 
 Gmail example:
 
@@ -197,7 +200,9 @@ Dev proxy behavior:
 
 - validates request,
 - writes to PostgreSQL,
-- sends email notification if SMTP is configured.
+- sends email notification to you if SMTP is configured,
+- sends an automated reply to the sender with brief intro + 48 business-hours response note,
+- attaches your resume PDF in the auto-reply (using `RESUME_PDF_URL` or fallback URL).
 
 ---
 
@@ -219,6 +224,7 @@ Dev proxy behavior:
 
 - validates email input,
 - sends resume email using existing SMTP configuration,
+- attaches resume PDF (`RESUME_PDF_URL` or fallback URL) and includes backup link,
 - returns success/error status for frontend feedback.
 
 ---
