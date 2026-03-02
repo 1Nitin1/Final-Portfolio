@@ -6,7 +6,8 @@ Interactive developer portfolio with:
 - WebGL/Three.js sections via React Three Fiber,
 - a PostgreSQL-backed contact workflow (local Express + production serverless API),
 - a featured Projects section with live demo links,
-- and a dedicated Resume section with View/Download actions.
+- a dedicated Resume section with View/Download actions,
+- and a Get Emailed flow to send the resume directly to a visitor's email.
 
 ---
 
@@ -49,6 +50,7 @@ Recent UX updates:
 
 - Projects cards include clickable preview images and "View Live" CTA.
 - Resume section includes "View" and "Download" buttons.
+- Resume section also supports "Get Emailed" with email input + submit.
 - On mobile, the solar system panel appears before the contact form for better flow.
 
 ### 4) Contact API (Local Dev)
@@ -79,6 +81,7 @@ Stored fields:
 
 - **Vercel serverless function** at `api/contact.js`.
 - Mirrors local contact API behavior so deployed frontend can submit directly.
+- Additional serverless route at `api/resume-email.js` for resume delivery emails.
 
 ---
 
@@ -94,6 +97,7 @@ Stored fields:
 - `src/assets/todo.png` → todo app project preview image.
 - `server/index.js` → local Express contact API.
 - `api/contact.js` → production serverless contact API.
+- `api/resume-email.js` → production serverless resume email API.
 - `vite.config.js` → dev proxy for `/api`.
 - `.env.example` → environment variable template.
 
@@ -194,6 +198,28 @@ Dev proxy behavior:
 - validates request,
 - writes to PostgreSQL,
 - sends email notification if SMTP is configured.
+
+---
+
+## Resume Email API Contract
+
+### Endpoint
+
+- `POST /api/resume-email`
+
+### Request Body
+
+```json
+{
+  "email": "name@company.com"
+}
+```
+
+### Behavior
+
+- validates email input,
+- sends resume email using existing SMTP configuration,
+- returns success/error status for frontend feedback.
 
 ---
 

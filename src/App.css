@@ -1331,6 +1331,92 @@ body,
   border-color: rgba(212, 187, 255, 0.4);
 }
 
+.resume-email-form {
+  margin-top: 14px;
+  width: min(100%, 460px);
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resume-email-label {
+  color: rgba(238, 226, 255, 0.95);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.resume-email-input {
+  width: 100%;
+  border: 1px solid rgba(208, 183, 255, 0.28);
+  border-radius: 12px;
+  background: rgba(16, 7, 29, 0.7);
+  color: #fff;
+  padding: 11px 12px;
+  font-size: 0.95rem;
+  outline: none;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+
+.resume-email-input::placeholder {
+  color: rgba(220, 201, 252, 0.55);
+}
+
+.resume-email-input:focus {
+  border-color: rgba(222, 193, 255, 0.85);
+  background: rgba(20, 9, 36, 0.88);
+  box-shadow: 0 0 0 2px rgba(173, 109, 255, 0.3);
+}
+
+.resume-email-submit {
+  border: 1px solid rgba(228, 204, 255, 0.7);
+  border-radius: 12px;
+  background: linear-gradient(125deg, #7f48db 0%, #aa6dff 100%);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 11px 14px;
+  cursor: pointer;
+  transition:
+    transform 170ms ease,
+    box-shadow 170ms ease,
+    filter 170ms ease;
+}
+
+.resume-email-submit:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 12px 24px rgba(103, 41, 189, 0.42);
+}
+
+.resume-email-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+  transform: none;
+  box-shadow: none;
+  filter: none;
+}
+
+.resume-email-feedback {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.resume-email-feedback.success {
+  color: rgba(169, 255, 210, 0.95);
+}
+
+.resume-email-feedback.error {
+  color: rgba(255, 187, 203, 0.96);
+}
+
 @media (max-width: 1180px) {
   .main-screen {
     gap: 18px;

@@ -123,6 +123,59 @@ async function sendContactNotification({
   return { sent: true };
 }
 
+async function sendResumeEmail({ email }) {
+  const mailer = getTransporter();
+
+  if (!mailer) {
+    return {
+      sent: false,
+      reason: "Mailer is not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS.",
+    };
+  }
+
+  const mailFrom = process.env.MAIL_FROM || process.env.SMTP_USER;
+  const subject = "Your requested resume - Nitin Baranwal";
+  const text = [
+    "Hi there,",
+    "",
+    "Thanks for requesting my resume.",
+    "",
+    "View Resume:",
+    "https://drive.google.com/file/d/1gniCu779cwb1_O3-yF54fo0YI9mmHS7o/view?usp=drivesdk",
+    "",
+    "Download Resume:",
+    "https://drive.google.com/uc?export=download&id=1gniCu779cwb1_O3-yF54fo0YI9mmHS7o",
+    "",
+    "Best regards,",
+    "Nitin Baranwal",
+  ].join("\n");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
+      <h2 style="margin: 0 0 12px; color: #111827;">Resume Request</h2>
+      <p style="margin: 0 0 12px;">Hi there,</p>
+      <p style="margin: 0 0 12px;">Thanks for requesting my resume.</p>
+      <p style="margin: 0 0 8px;">
+        <a href="https://drive.google.com/file/d/1gniCu779cwb1_O3-yF54fo0YI9mmHS7o/view?usp=drivesdk" target="_blank" rel="noreferrer">View Resume</a>
+      </p>
+      <p style="margin: 0 0 12px;">
+        <a href="https://drive.google.com/uc?export=download&id=1gniCu779cwb1_O3-yF54fo0YI9mmHS7o" target="_blank" rel="noreferrer">Download Resume</a>
+      </p>
+      <p style="margin: 0;">Best regards,<br />Nitin Baranwal</p>
+    </div>
+  `;
+
+  await mailer.sendMail({
+    from: mailFrom,
+    to: email,
+    subject,
+    text,
+    html,
+  });
+
+  return { sent: true };
+}
+
 const pool = new Pool(
   process.env.DATABASE_URL
     ? {
@@ -259,6 +312,55 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error while saving your message.",
+    });
+  }
+});
+
+app.post("/api/resume-email", contactLimiter, async (req, res) => {
+  const email =
+    typeof req.body?.email === "string" ? req.body.email.trim() : "";
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Email is required.",
+    });
+  }
+
+  if (email.length > 255) {
+    return res.status(400).json({
+      success: false,
+      message: "Email is too long.",
+    });
+  }
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) {
+    return res.status(400).json({
+      success: false,
+      message: "Please enter a valid email address.",
+    });
+  }
+
+  try {
+    const mailResult = await sendResumeEmail({ email });
+
+    if (!mailResult.sent) {
+      return res.status(500).json({
+        success: false,
+        message: "Resume email service is not configured yet.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Resume sent successfully. Please check your inbox.",
+    });
+  } catch (error) {
+    console.error("Error sending resume email:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while sending resume email.",
     });
   }
 });
