@@ -662,13 +662,15 @@ function InteractiveSkillModel({
   );
 }
 
-function SkillModelSlot({ cardName }) {
+function SkillModelSlot({ cardName, lowSpecMode = false }) {
   const modelFileNames = skillCardModelFileMap[cardName] || [];
   const [viewportWidth, setViewportWidth] = React.useState(() =>
     typeof window === "undefined" ? 1200 : window.innerWidth,
   );
   const [isCanvasHeld, setIsCanvasHeld] = React.useState(false);
   const [isCanvasHovered, setIsCanvasHovered] = React.useState(false);
+  const slotRef = React.useRef(null);
+  const [shouldRenderCanvas, setShouldRenderCanvas] = React.useState(true);
 
   React.useEffect(() => {
     if (typeof window === "undefined") {
@@ -685,6 +687,36 @@ function SkillModelSlot({ cardName }) {
     };
   }, []);
 
+  React.useEffect(() => {
+    if (!lowSpecMode || typeof window === "undefined") {
+      setShouldRenderCanvas(true);
+      return;
+    }
+
+    const target = slotRef.current;
+    if (!target || typeof IntersectionObserver === "undefined") {
+      setShouldRenderCanvas(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShouldRenderCanvas(entry.isIntersecting);
+      },
+      {
+        root: null,
+        rootMargin: "220px 0px",
+        threshold: 0.08,
+      },
+    );
+
+    observer.observe(target);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [lowSpecMode]);
+
   const baseCardConfig = {
     ...defaultSkillModelVisualConfig,
     ...(skillModelConfig[cardName] || {}),
@@ -700,8 +732,12 @@ function SkillModelSlot({ cardName }) {
     );
   }
 
-  const isMulti = modelFileNames.length > 1;
-  const modelCount = modelFileNames.length;
+  const visibleModelFileNames = lowSpecMode
+    ? modelFileNames.slice(0, 2)
+    : modelFileNames;
+
+  const isMulti = visibleModelFileNames.length > 1;
+  const modelCount = visibleModelFileNames.length;
   const baseOffsets = getSideBySideOffsets(modelCount);
 
   const spacingCompression =
@@ -725,6 +761,7 @@ function SkillModelSlot({ cardName }) {
   const isSharedCanvasActive = isMobileCanvasView
     ? isCanvasHeld
     : isCanvasHovered;
+  const useConservativeCanvasMode = isMobileCanvasView || lowSpecMode;
 
   const handleSlotPointerDown = (event) => {
     if (!isMobileCanvasView) {
@@ -781,6 +818,7 @@ function SkillModelSlot({ cardName }) {
 
   return (
     <div
+      ref={slotRef}
       className={`skill-model-slot ${isMulti ? "multi" : "single"}`}
       aria-hidden="true"
       onPointerDown={handleSlotPointerDown}
@@ -789,54 +827,72 @@ function SkillModelSlot({ cardName }) {
       onPointerEnter={handleSlotPointerEnter}
       onPointerLeave={handleSlotPointerLeave}
     >
-      <Canvas
-        className="skill-model-canvas"
-        camera={{
-          position: [
-            baseCardConfig.cameraPosition[0],
-            baseCardConfig.cameraPosition[1],
-            baseCardConfig.cameraPosition[2] + cameraDistanceBoost,
-          ],
-          fov: baseCardConfig.fov + cameraFovBoost,
-        }}
-      >
-        <ambientLight intensity={baseCardConfig.ambientIntensity ?? 0.78} />
-        <hemisphereLight
-          intensity={1.05}
-          color="#fff2ff"
-          groundColor="#35174f"
-        />
-        <directionalLight position={[2.5, 3, 2.5]} intensity={1.4} />
-        <pointLight position={[-2, 1.2, 2]} intensity={1.15} color="#c99bff" />
-        <Suspense fallback={null}>
-          {modelFileNames.map((modelFileName, index) => {
-            const perFileConfig = {
-              ...baseCardConfig,
-              ...(skillModelOverridesByFile[modelFileName] || {}),
-            };
-            const [baseX, baseY, baseZ] = perFileConfig.position;
-            const adjustedXOffset = baseOffsets[index] * spacingCompression;
+      {shouldRenderCanvas ? (
+        <Canvas
+          className="skill-model-canvas"
+          camera={{
+            position: [
+              baseCardConfig.cameraPosition[0],
+              baseCardConfig.cameraPosition[1],
+              baseCardConfig.cameraPosition[2] + cameraDistanceBoost,
+            ],
+            fov: baseCardConfig.fov + cameraFovBoost,
+          }}
+          dpr={useConservativeCanvasMode ? [0.75, 1] : [1, 1.75]}
+          gl={{
+            antialias: !useConservativeCanvasMode,
+            powerPreference: useConservativeCanvasMode
+              ? "low-power"
+              : "high-performance",
+            stencil: false,
+          }}
+          performance={{ min: useConservativeCanvasMode ? 0.4 : 0.6 }}
+        >
+          <ambientLight intensity={baseCardConfig.ambientIntensity ?? 0.78} />
+          <hemisphereLight
+            intensity={1.05}
+            color="#fff2ff"
+            groundColor="#35174f"
+          />
+          <directionalLight position={[2.5, 3, 2.5]} intensity={1.4} />
+          <pointLight
+            position={[-2, 1.2, 2]}
+            intensity={1.15}
+            color="#c99bff"
+          />
+          <Suspense fallback={null}>
+            {visibleModelFileNames.map((modelFileName, index) => {
+              const perFileConfig = {
+                ...baseCardConfig,
+                ...(skillModelOverridesByFile[modelFileName] || {}),
+              };
+              const [baseX, baseY, baseZ] = perFileConfig.position;
+              const adjustedXOffset = baseOffsets[index] * spacingCompression;
 
-            return (
-              <InteractiveSkillModel
-                key={`${cardName}-${modelFileName}`}
-                modelPath={`/models/${modelFileName}`}
-                baseScale={perFileConfig.baseScale}
-                position={[baseX + adjustedXOffset, baseY, baseZ]}
-                initialRotation={perFileConfig.initialRotation}
-                lightBoost={perFileConfig.lightBoost}
-                forceActive={isSharedCanvasActive}
-              />
-            );
-          })}
-        </Suspense>
-      </Canvas>
+              return (
+                <InteractiveSkillModel
+                  key={`${cardName}-${modelFileName}`}
+                  modelPath={`/models/${modelFileName}`}
+                  baseScale={perFileConfig.baseScale}
+                  position={[baseX + adjustedXOffset, baseY, baseZ]}
+                  initialRotation={perFileConfig.initialRotation}
+                  lightBoost={perFileConfig.lightBoost}
+                  forceActive={isSharedCanvasActive}
+                />
+              );
+            })}
+          </Suspense>
+        </Canvas>
+      ) : (
+        <div className="skill-model-canvas" />
+      )}
       <span className="skill-model-hint">Hold / Hover</span>
     </div>
   );
 }
 function App() {
   const [isMobileWebglMode, setIsMobileWebglMode] = React.useState(false);
+  const [isLowSpecDevice, setIsLowSpecDevice] = React.useState(false);
   const [homeCanvasKey, setHomeCanvasKey] = React.useState(0);
   const [nameCanvasKey, setNameCanvasKey] = React.useState(0);
   const [activeTab, setActiveTab] = React.useState("home");
@@ -901,6 +957,21 @@ function App() {
       }
     };
   }, []);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined" || typeof navigator === "undefined") {
+      return;
+    }
+
+    const deviceMemory = Number(navigator.deviceMemory || 0);
+    const cpuCores = Number(navigator.hardwareConcurrency || 0);
+    const lowMemory = deviceMemory > 0 && deviceMemory <= 4;
+    const lowCpu = cpuCores > 0 && cpuCores <= 4;
+
+    setIsLowSpecDevice(lowMemory || lowCpu);
+  }, []);
+
+  const useConservativeWebglMode = isMobileWebglMode || isLowSpecDevice;
 
   const attachWebglRecovery = React.useCallback((canvasElement, restart) => {
     if (!canvasElement || canvasElement.dataset.webglRecoveryAttached === "1") {
@@ -1541,13 +1612,15 @@ function App() {
           <Canvas
             key={homeCanvasKey}
             camera={{ position: [0, 0, 8], fov: 50 }}
-            dpr={isMobileWebglMode ? [1, 1.2] : [1, 2]}
+            dpr={useConservativeWebglMode ? [0.75, 1] : [1, 1.75]}
             gl={{
-              antialias: !isMobileWebglMode,
-              powerPreference: isMobileWebglMode
+              antialias: !useConservativeWebglMode,
+              powerPreference: useConservativeWebglMode
                 ? "low-power"
                 : "high-performance",
+              stencil: false,
             }}
+            performance={{ min: useConservativeWebglMode ? 0.4 : 0.6 }}
             onCreated={handleHomeCanvasCreated}
           >
             <ambientLight intensity={0.8} />
@@ -1563,7 +1636,7 @@ function App() {
 
         <Snowfall
           className="home-hero-snow"
-          snowflakeCount={120}
+          snowflakeCount={useConservativeWebglMode ? 45 : 120}
           speed={[0.3, 0.9]}
           wind={[-0.25, 0.35]}
           radius={[0.5, 2.1]}
@@ -1601,13 +1674,15 @@ function App() {
               <Canvas
                 key={nameCanvasKey}
                 camera={{ position: [0, 0, 5], fov: 45 }}
-                dpr={isMobileWebglMode ? [1, 1.2] : [1, 2]}
+                dpr={useConservativeWebglMode ? [0.75, 1] : [1, 1.75]}
                 gl={{
-                  antialias: !isMobileWebglMode,
-                  powerPreference: isMobileWebglMode
+                  antialias: !useConservativeWebglMode,
+                  powerPreference: useConservativeWebglMode
                     ? "low-power"
                     : "high-performance",
+                  stencil: false,
                 }}
+                performance={{ min: useConservativeWebglMode ? 0.4 : 0.6 }}
                 onCreated={handleNameCanvasCreated}
               >
                 <ambientLight intensity={0.9} />
@@ -1665,7 +1740,18 @@ function App() {
           onPointerCancel={handleCanvasPointerCancel}
         >
           <span className="canvas-hold-hint">Hold to rotate</span>
-          <Canvas camera={{ position: [2, 2, 4], fov: 60 }}>
+          <Canvas
+            camera={{ position: [2, 2, 4], fov: 60 }}
+            dpr={useConservativeWebglMode ? [0.75, 1] : [1, 1.75]}
+            gl={{
+              antialias: !useConservativeWebglMode,
+              powerPreference: useConservativeWebglMode
+                ? "low-power"
+                : "high-performance",
+              stencil: false,
+            }}
+            performance={{ min: useConservativeWebglMode ? 0.4 : 0.6 }}
+          >
             <ambientLight intensity={0.6} />
             <directionalLight position={[3, 3, 3]} intensity={1} />
             <Suspense fallback={null}>
@@ -1693,7 +1779,10 @@ function App() {
               <div className="domain-card-grid">
                 {domain.cards.map((card) => (
                   <div key={card.name} className="domain-skill-card">
-                    <SkillModelSlot cardName={card.name} />
+                    <SkillModelSlot
+                      cardName={card.name}
+                      lowSpecMode={useConservativeWebglMode}
+                    />
 
                     <h4 className="domain-skill-name">{card.name}</h4>
                     <p className="domain-skill-level">{card.level}</p>
