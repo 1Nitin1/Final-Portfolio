@@ -836,6 +836,7 @@ function SkillModelSlot({ cardName, lowSpecMode = false }) {
 function App() {
   const [isMobileWebglMode, setIsMobileWebglMode] = React.useState(false);
   const [isLowSpecDevice, setIsLowSpecDevice] = React.useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);
   const [homeCanvasKey, setHomeCanvasKey] = React.useState(0);
   const [nameCanvasKey, setNameCanvasKey] = React.useState(0);
   const [activeTab, setActiveTab] = React.useState("home");
@@ -912,6 +913,23 @@ function App() {
     const lowCpu = cpuCores > 0 && cpuCores <= 4;
 
     setIsLowSpecDevice(lowMemory || lowCpu);
+  }, []);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleResize = () => {
+      if (window.innerWidth > 960) {
+        setIsMobileNavOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   const useConservativeWebglMode = isMobileWebglMode || isLowSpecDevice;
@@ -1180,6 +1198,7 @@ function App() {
 
   const handleNavClick = (sectionId) => {
     setActiveTab(sectionId);
+    setIsMobileNavOpen(false);
 
     const scrollToSectionWithOffset = (sectionElement) => {
       if (!sectionElement) {
@@ -1529,7 +1548,21 @@ function App() {
           />
           <span>Portfolio</span>
         </div>
-        <nav className="taskbar-nav" aria-label="Portfolio navigation">
+        <button
+          type="button"
+          className="taskbar-mobile-toggle"
+          aria-label={
+            isMobileNavOpen ? "Close navigation menu" : "Open navigation menu"
+          }
+          aria-expanded={isMobileNavOpen}
+          onClick={() => setIsMobileNavOpen((prev) => !prev)}
+        >
+          {isMobileNavOpen ? "Close" : "Menu"}
+        </button>
+        <nav
+          className={`taskbar-nav ${isMobileNavOpen ? "mobile-open" : ""}`}
+          aria-label="Portfolio navigation"
+        >
           {navItems.map((item) => (
             <button
               key={item.id}

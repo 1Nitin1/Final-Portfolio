@@ -56,6 +56,10 @@ Recent UX updates:
 - In multi-model skill cards, hover/hold activation is synchronized so all models animate together.
 - On mobile, holding anywhere on a skill model canvas activates hold interaction for all models in that card.
 - Home and Name 3D canvases include production-safe mobile WebGL recovery + lower GPU settings to prevent white/dead canvas states.
+- Skills section is simplified to 3 cards total (Design, AI/ML, Web Development), with one model canvas per domain.
+- On mobile, the top navigation collapses into a single Menu button with a popout nav panel.
+- The Portfolio brand is centered in the mobile taskbar layout.
+- Celestial (Resonance Orrery) now has low-spec safeguards: reduced DPR, lower geometry detail, optional post-processing disable, and throttled rendering.
 
 ### 4) Contact API (Local Dev)
 
