@@ -184,12 +184,24 @@ const ORRERY_HTML = `<!doctype html>
       let resonanceLinks = [];
       let timeAcceleration = 1.0;
       let isResonanceActive = false;
+      let isLowSpecDevice = false;
+      let enablePostProcessing = true;
+      let lastFrameTimestamp = 0;
       const currentThemeIndex = 2;
 
       const container = document.getElementById('container');
       const activateButton = document.getElementById('activateTrigger');
       const resetButton = document.getElementById('resetView');
       const timeButton = document.getElementById('timeAccel');
+
+      function detectLowSpecDevice() {
+        const memory = Number(navigator.deviceMemory || 0);
+        const cpuCores = Number(navigator.hardwareConcurrency || 0);
+        const coarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        const smallViewport = Math.max(window.innerWidth, window.innerHeight) <= 900;
+
+        return (memory > 0 && memory <= 4) || (cpuCores > 0 && cpuCores <= 4) || (coarsePointer && smallViewport);
+      }
 
       const themes = [
         {
@@ -233,28 +245,36 @@ const ORRERY_HTML = `<!doctype html>
       function init(){
         scene=new THREE.Scene();
         clock=new THREE.Clock();
+        isLowSpecDevice = detectLowSpecDevice();
+        enablePostProcessing = !isLowSpecDevice;
         camera=new THREE.PerspectiveCamera(52,window.innerWidth/window.innerHeight,0.1,3000);
         camera.position.set(25,20,25);
 
-        renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+        renderer=new THREE.WebGLRenderer({
+          antialias: !isLowSpecDevice,
+          powerPreference: isLowSpecDevice ? 'low-power' : 'high-performance',
+          stencil: false,
+        });
         renderer.setSize(window.innerWidth,window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+        renderer.setPixelRatio(isLowSpecDevice ? 1 : Math.min(window.devicePixelRatio,1.5));
         renderer.toneMapping=THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure=1.1;
+        renderer.toneMappingExposure=isLowSpecDevice ? 1 : 1.1;
         container.appendChild(renderer.domElement);
 
         controls=new OrbitControls(camera,renderer.domElement);
         controls.enableDamping=true;
-        controls.dampingFactor=0.03;
+        controls.dampingFactor=isLowSpecDevice ? 0.045 : 0.03;
         controls.minDistance=8;
         controls.maxDistance=150;
         controls.autoRotate=true;
-        controls.autoRotateSpeed=0.15;
+        controls.autoRotateSpeed=isLowSpecDevice ? 0.1 : 0.15;
         controls.enablePan=false;
 
         setupLighting();
         createOrrery();
-        setupPostProcessing();
+        if (enablePostProcessing) {
+          setupPostProcessing();
+        }
         applyTheme(currentThemeIndex);
 
         window.addEventListener('resize',onWindowResize);
@@ -279,7 +299,7 @@ const ORRERY_HTML = `<!doctype html>
       function setupPostProcessing(){
         composer=new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene,camera));
-        const bloomPass=new UnrealBloomPass(new THREE.Vector2(window.innerWidth,window.innerHeight),0.55,0.5,0.16);
+        const bloomPass=new UnrealBloomPass(new THREE.Vector2(window.innerWidth,window.innerHeight),0.45,0.45,0.2);
         composer.addPass(bloomPass);
         composer.addPass(new OutputPass());
       }
@@ -306,8 +326,10 @@ const ORRERY_HTML = `<!doctype html>
         star=new THREE.Mesh(starGeo,starMaterial);
         orrery.add(star);
 
+        const gearRadialSegments = isLowSpecDevice ? 8 : 12;
+        const gearTubularSegments = isLowSpecDevice ? 40 : 64;
         for(let i=0;i<7;i++){
-          const gearGeo=new THREE.TorusGeometry(2.8+i*0.5,0.18,12,64);
+          const gearGeo=new THREE.TorusGeometry(2.8+i*0.5,0.18,gearRadialSegments,gearTubularSegments);
           const gear=new THREE.Mesh(gearGeo,metalMaterial);
           gear.rotation.x=Math.PI/2;
           gear.position.y=-2-i*0.25;
@@ -315,7 +337,8 @@ const ORRERY_HTML = `<!doctype html>
           orrery.add(gear);
         }
 
-        const planetGeometries=[new THREE.OctahedronGeometry(0.6,1),new THREE.DodecahedronGeometry(0.9,1),new THREE.IcosahedronGeometry(0.7,1)];
+        const planetDetail = isLowSpecDevice ? 0 : 1;
+        const planetGeometries=[new THREE.OctahedronGeometry(0.6,planetDetail),new THREE.DodecahedronGeometry(0.9,planetDetail),new THREE.IcosahedronGeometry(0.7,planetDetail)];
         const planetBaseData=[{size:0.6,distance:8,speed:0.6},{size:0.9,distance:14,speed:0.35},{size:0.7,distance:22,speed:0.25}];
 
         planetBaseData.forEach((data,i)=>{
@@ -324,7 +347,9 @@ const ORRERY_HTML = `<!doctype html>
           planetGroup.rotation.y=Math.random()*Math.PI*2;
           orrery.add(planetGroup);
 
-          const ringGeo=new THREE.TorusGeometry(data.distance,0.08,20,128);
+          const orbitRadialSegments = isLowSpecDevice ? 12 : 20;
+          const orbitTubularSegments = isLowSpecDevice ? 64 : 128;
+          const ringGeo=new THREE.TorusGeometry(data.distance,0.08,orbitRadialSegments,orbitTubularSegments);
           const ring=new THREE.Mesh(ringGeo,ringMaterial);
           ring.rotation.x=Math.PI/2;
           planetGroup.add(ring);
@@ -500,11 +525,21 @@ const ORRERY_HTML = `<!doctype html>
         camera.aspect=window.innerWidth/window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth,window.innerHeight);
-        composer.setSize(window.innerWidth,window.innerHeight);
+        if (composer) {
+          composer.setSize(window.innerWidth,window.innerHeight);
+        }
       }
 
       function animate(){
         requestAnimationFrame(animate);
+
+        if (isLowSpecDevice) {
+          const now = performance.now();
+          if (now - lastFrameTimestamp < 33) {
+            return;
+          }
+          lastFrameTimestamp = now;
+        }
 
         const delta=clock.getDelta()*timeAcceleration;
         const t=clock.getElapsedTime();
@@ -537,7 +572,11 @@ const ORRERY_HTML = `<!doctype html>
         }
 
         controls.update();
-        composer.render(delta);
+        if (composer) {
+          composer.render(delta);
+        } else {
+          renderer.render(scene,camera);
+        }
       }
 
       init();
