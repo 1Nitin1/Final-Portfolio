@@ -67,17 +67,15 @@ const projectCards = [
 ];
 
 const skillCardModelFileMap = {
-  Blender: ["blender.glb"],
-  Figma: ["figma.glb"],
-  "Python ML Stack": ["python.glb", "numpy.glb", "pandas.glb"],
-  "Model Evaluation": ["tensorflow.glb"],
-  Frontend: ["html.glb", "css.glb", "js.glb", "react.glb"],
-  "Backend Basics": [
-    "expressjs.glb",
+  "Design Toolkit": ["blender.glb", "figma.glb"],
+  "AI/ML Toolkit": ["python.glb", "tensorflow.glb", "fastapi.glb"],
+  "Web Dev Toolkit": [
+    "react.glb",
     "nodejs.glb",
+    "expressjs.glb",
     "docker.glb",
     "kubernetes.glb",
-    "postmanapi.glb",
+    "aws.glb",
   ],
 };
 
@@ -143,6 +141,14 @@ const skillModelOverridesByFile = {
     baseScale: 7.5,
     position: [0, -0.1, 0],
   },
+  "aws.glb": {
+    baseScale: 8,
+    position: [0, -0.12, 0],
+  },
+  "fastapi.glb": {
+    baseScale: 7.8,
+    position: [0, -0.1, 0],
+  },
 };
 
 function getSideBySideOffsets(count) {
@@ -201,19 +207,13 @@ const skillDomains = [
     id: "design",
     title: "Design",
     summary:
-      "I use design tools to turn ideas into polished visual experiences with strong composition, consistency, and interaction flow.",
+      "I design product-ready interfaces and 3D visuals focused on clarity, consistency, and developer handoff.",
     cards: [
       {
-        name: "Blender",
-        level: "3D Design & Asset Workflow",
+        name: "Design Toolkit",
+        level: "Product UI + 3D",
         description:
-          "I create and optimize 3D assets in Blender, including modeling, UV/material setup, and export to GLB for web scenes in Three.js and React Three Fiber.",
-      },
-      {
-        name: "Figma",
-        level: "UI/UX Design",
-        description:
-          "I design clean UI systems in Figma with reusable components, Auto Layout, and design tokens, then hand off specs that map smoothly into React + CSS implementations.",
+          "Using Figma and Blender, I build reusable UI patterns, interactive prototypes, and optimized GLB assets for modern web apps and portfolio experiences.",
       },
     ],
   },
@@ -221,19 +221,13 @@ const skillDomains = [
     id: "aiml",
     title: "AI/ML",
     summary:
-      "I build practical machine learning foundations, from data preparation to model experimentation and result analysis.",
+      "I build practical ML workflows that move from clean data to measurable model performance.",
     cards: [
       {
-        name: "Python ML Stack",
-        level: "Data & Model Building",
+        name: "AI/ML Toolkit",
+        level: "Data + Model Workflow",
         description:
-          "Using Python with NumPy and Pandas, I handle cleaning, transformation, and feature prep, plus notebook-based analysis in Jupyter and visualization with Matplotlib/Seaborn.",
-      },
-      {
-        name: "Model Evaluation",
-        level: "Experiment & Iteration",
-        description:
-          "With TensorFlow workflows, I run training experiments, compare metrics, and iterate on architecture/hyperparameters while tracking runs and validating results with scikit-learn metrics.",
+          "I use Python and TensorFlow for preprocessing, training, and evaluation, with experiments tracked through metrics, validation splits, and iterative tuning.",
       },
     ],
   },
@@ -241,19 +235,13 @@ const skillDomains = [
     id: "web-dev",
     title: "Web Development",
     summary:
-      "I create responsive and interactive web applications with modern frontend tooling and clean component architecture.",
+      "I build full-stack web products with responsive UI, scalable APIs, and deployment-ready architecture.",
     cards: [
       {
-        name: "Frontend",
-        level: "React & UI Systems",
+        name: "Web Dev Toolkit",
+        level: "Modern Full-Stack Core",
         description:
-          "I build frontend interfaces with React, HTML, CSS, and JavaScript, and use Vite, GSAP, and responsive layout patterns to deliver smooth, production-ready UI interactions.",
-      },
-      {
-        name: "Backend Basics",
-        level: "API & App Logic",
-        description:
-          "I work with Express and Node.js for APIs, test endpoints with Postman, manage data using PostgreSQL/Neon, and use Docker/Kubernetes basics for containerized backend workflows.",
+          "With React, Node.js, and Express, I ship feature-driven apps with clean component architecture, REST APIs, authentication-ready patterns, and cloud-friendly deployment flow.",
       },
     ],
   },
