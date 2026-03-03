@@ -52,6 +52,8 @@ Recent UX updates:
 - Resume section includes "View" and "Download" buttons.
 - Resume section also supports "Get Emailed" with email input + submit.
 - On mobile, the solar system panel appears before the contact form for better flow.
+- On desktop, entering a skill model canvas now triggers hover immediately (without needing to touch a mesh first).
+- In multi-model skill cards, hover/hold activation is synchronized so all models animate together.
 - On mobile, holding anywhere on a skill model canvas activates hold interaction for all models in that card.
 - Home and Name 3D canvases include production-safe mobile WebGL recovery + lower GPU settings to prevent white/dead canvas states.
 
@@ -80,6 +82,7 @@ Stored fields:
 - If SMTP is not configured, submissions are still saved to DB.
 - Contact submissions now also trigger an automated acknowledgement email to the sender.
 - Both acknowledgement and Get Emailed flows can attach resume PDF using `RESUME_PDF_URL`.
+- Contact notification timestamps are formatted in Indian Standard Time (`Asia/Kolkata`).
 
 ### 7) Production API Path
 

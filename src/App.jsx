@@ -620,7 +620,7 @@ function InteractiveSkillModel({
       return;
     }
 
-    const rotationYSpeed = isActive ? 1.7 : 0.45;
+    const rotationYSpeed = isActive ? 1.7 : 0;
     modelGroupRef.current.rotation.y += delta * rotationYSpeed;
 
     const targetScale = baseScale * (isActive ? 1.12 : 1);
@@ -668,6 +668,7 @@ function SkillModelSlot({ cardName }) {
     typeof window === "undefined" ? 1200 : window.innerWidth,
   );
   const [isCanvasHeld, setIsCanvasHeld] = React.useState(false);
+  const [isCanvasHovered, setIsCanvasHovered] = React.useState(false);
 
   React.useEffect(() => {
     if (typeof window === "undefined") {
@@ -721,6 +722,9 @@ function SkillModelSlot({ cardName }) {
   const cameraFovBoost =
     viewportWidth <= 560 ? 6 : viewportWidth <= 760 ? 3 : 0;
   const isMobileCanvasView = viewportWidth <= 760;
+  const isSharedCanvasActive = isMobileCanvasView
+    ? isCanvasHeld
+    : isCanvasHovered;
 
   const handleSlotPointerDown = (event) => {
     if (!isMobileCanvasView) {
@@ -762,6 +766,19 @@ function SkillModelSlot({ cardName }) {
     }
   };
 
+  const handleSlotPointerEnter = (event) => {
+    if (isMobileCanvasView || event.pointerType === "touch") {
+      return;
+    }
+
+    setIsCanvasHovered(true);
+  };
+
+  const handleSlotPointerLeave = () => {
+    setIsCanvasHeld(false);
+    setIsCanvasHovered(false);
+  };
+
   return (
     <div
       className={`skill-model-slot ${isMulti ? "multi" : "single"}`}
@@ -769,9 +786,8 @@ function SkillModelSlot({ cardName }) {
       onPointerDown={handleSlotPointerDown}
       onPointerUp={handleSlotPointerUp}
       onPointerCancel={handleSlotPointerCancel}
-      onPointerLeave={() => {
-        setIsCanvasHeld(false);
-      }}
+      onPointerEnter={handleSlotPointerEnter}
+      onPointerLeave={handleSlotPointerLeave}
     >
       <Canvas
         className="skill-model-canvas"
@@ -809,7 +825,7 @@ function SkillModelSlot({ cardName }) {
                 position={[baseX + adjustedXOffset, baseY, baseZ]}
                 initialRotation={perFileConfig.initialRotation}
                 lightBoost={perFileConfig.lightBoost}
-                forceActive={isMobileCanvasView && isCanvasHeld}
+                forceActive={isSharedCanvasActive}
               />
             );
           })}

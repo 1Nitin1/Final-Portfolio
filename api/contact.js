@@ -81,6 +81,8 @@ async function sendContactNotification({
   const submittedAt = new Date().toLocaleString("en-IN", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: "Asia/Kolkata",
+    timeZoneName: "short",
   });
 
   const subject = `New Portfolio Contact Message from ${name}`;
