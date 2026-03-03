@@ -669,8 +669,6 @@ function SkillModelSlot({ cardName, lowSpecMode = false }) {
   );
   const [isCanvasHeld, setIsCanvasHeld] = React.useState(false);
   const [isCanvasHovered, setIsCanvasHovered] = React.useState(false);
-  const slotRef = React.useRef(null);
-  const [shouldRenderCanvas, setShouldRenderCanvas] = React.useState(true);
 
   React.useEffect(() => {
     if (typeof window === "undefined") {
@@ -687,36 +685,6 @@ function SkillModelSlot({ cardName, lowSpecMode = false }) {
     };
   }, []);
 
-  React.useEffect(() => {
-    if (!lowSpecMode || typeof window === "undefined") {
-      setShouldRenderCanvas(true);
-      return;
-    }
-
-    const target = slotRef.current;
-    if (!target || typeof IntersectionObserver === "undefined") {
-      setShouldRenderCanvas(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setShouldRenderCanvas(entry.isIntersecting);
-      },
-      {
-        root: null,
-        rootMargin: "220px 0px",
-        threshold: 0.08,
-      },
-    );
-
-    observer.observe(target);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [lowSpecMode]);
-
   const baseCardConfig = {
     ...defaultSkillModelVisualConfig,
     ...(skillModelConfig[cardName] || {}),
@@ -732,12 +700,8 @@ function SkillModelSlot({ cardName, lowSpecMode = false }) {
     );
   }
 
-  const visibleModelFileNames = lowSpecMode
-    ? modelFileNames.slice(0, 2)
-    : modelFileNames;
-
-  const isMulti = visibleModelFileNames.length > 1;
-  const modelCount = visibleModelFileNames.length;
+  const isMulti = modelFileNames.length > 1;
+  const modelCount = modelFileNames.length;
   const baseOffsets = getSideBySideOffsets(modelCount);
 
   const spacingCompression =
@@ -818,7 +782,6 @@ function SkillModelSlot({ cardName, lowSpecMode = false }) {
 
   return (
     <div
-      ref={slotRef}
       className={`skill-model-slot ${isMulti ? "multi" : "single"}`}
       aria-hidden="true"
       onPointerDown={handleSlotPointerDown}
@@ -827,65 +790,57 @@ function SkillModelSlot({ cardName, lowSpecMode = false }) {
       onPointerEnter={handleSlotPointerEnter}
       onPointerLeave={handleSlotPointerLeave}
     >
-      {shouldRenderCanvas ? (
-        <Canvas
-          className="skill-model-canvas"
-          camera={{
-            position: [
-              baseCardConfig.cameraPosition[0],
-              baseCardConfig.cameraPosition[1],
-              baseCardConfig.cameraPosition[2] + cameraDistanceBoost,
-            ],
-            fov: baseCardConfig.fov + cameraFovBoost,
-          }}
-          dpr={useConservativeCanvasMode ? [0.75, 1] : [1, 1.75]}
-          gl={{
-            antialias: !useConservativeCanvasMode,
-            powerPreference: useConservativeCanvasMode
-              ? "low-power"
-              : "high-performance",
-            stencil: false,
-          }}
-          performance={{ min: useConservativeCanvasMode ? 0.4 : 0.6 }}
-        >
-          <ambientLight intensity={baseCardConfig.ambientIntensity ?? 0.78} />
-          <hemisphereLight
-            intensity={1.05}
-            color="#fff2ff"
-            groundColor="#35174f"
-          />
-          <directionalLight position={[2.5, 3, 2.5]} intensity={1.4} />
-          <pointLight
-            position={[-2, 1.2, 2]}
-            intensity={1.15}
-            color="#c99bff"
-          />
-          <Suspense fallback={null}>
-            {visibleModelFileNames.map((modelFileName, index) => {
-              const perFileConfig = {
-                ...baseCardConfig,
-                ...(skillModelOverridesByFile[modelFileName] || {}),
-              };
-              const [baseX, baseY, baseZ] = perFileConfig.position;
-              const adjustedXOffset = baseOffsets[index] * spacingCompression;
+      <Canvas
+        className="skill-model-canvas"
+        camera={{
+          position: [
+            baseCardConfig.cameraPosition[0],
+            baseCardConfig.cameraPosition[1],
+            baseCardConfig.cameraPosition[2] + cameraDistanceBoost,
+          ],
+          fov: baseCardConfig.fov + cameraFovBoost,
+        }}
+        dpr={useConservativeCanvasMode ? [0.75, 1] : [1, 1.75]}
+        gl={{
+          antialias: !useConservativeCanvasMode,
+          powerPreference: useConservativeCanvasMode
+            ? "low-power"
+            : "high-performance",
+          stencil: false,
+        }}
+        performance={{ min: useConservativeCanvasMode ? 0.4 : 0.6 }}
+      >
+        <ambientLight intensity={baseCardConfig.ambientIntensity ?? 0.78} />
+        <hemisphereLight
+          intensity={1.05}
+          color="#fff2ff"
+          groundColor="#35174f"
+        />
+        <directionalLight position={[2.5, 3, 2.5]} intensity={1.4} />
+        <pointLight position={[-2, 1.2, 2]} intensity={1.15} color="#c99bff" />
+        <Suspense fallback={null}>
+          {modelFileNames.map((modelFileName, index) => {
+            const perFileConfig = {
+              ...baseCardConfig,
+              ...(skillModelOverridesByFile[modelFileName] || {}),
+            };
+            const [baseX, baseY, baseZ] = perFileConfig.position;
+            const adjustedXOffset = baseOffsets[index] * spacingCompression;
 
-              return (
-                <InteractiveSkillModel
-                  key={`${cardName}-${modelFileName}`}
-                  modelPath={`/models/${modelFileName}`}
-                  baseScale={perFileConfig.baseScale}
-                  position={[baseX + adjustedXOffset, baseY, baseZ]}
-                  initialRotation={perFileConfig.initialRotation}
-                  lightBoost={perFileConfig.lightBoost}
-                  forceActive={isSharedCanvasActive}
-                />
-              );
-            })}
-          </Suspense>
-        </Canvas>
-      ) : (
-        <div className="skill-model-canvas" />
-      )}
+            return (
+              <InteractiveSkillModel
+                key={`${cardName}-${modelFileName}`}
+                modelPath={`/models/${modelFileName}`}
+                baseScale={perFileConfig.baseScale}
+                position={[baseX + adjustedXOffset, baseY, baseZ]}
+                initialRotation={perFileConfig.initialRotation}
+                lightBoost={perFileConfig.lightBoost}
+                forceActive={isSharedCanvasActive}
+              />
+            );
+          })}
+        </Suspense>
+      </Canvas>
       <span className="skill-model-hint">Hold / Hover</span>
     </div>
   );
