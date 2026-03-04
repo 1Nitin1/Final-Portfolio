@@ -332,21 +332,6 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5)`,
       [name, email, message, ipAddress, userAgent],
     );
-
-    const mailResult = await sendContactNotification({
-      name,
-      email,
-      message,
-      ipAddress,
-      userAgent,
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: mailResult.sent
-        ? "Message sent successfully. Notification email delivered."
-        : "Message saved, but email notification is not configured yet.",
-    });
   } catch (error) {
     console.error("Error saving contact form:", error);
 
@@ -372,6 +357,26 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
       message: "Server error while saving your message.",
     });
   }
+
+  let mailResult = { sent: false };
+  try {
+    mailResult = await sendContactNotification({
+      name,
+      email,
+      message,
+      ipAddress,
+      userAgent,
+    });
+  } catch (mailError) {
+    console.error("Error sending contact notification email:", mailError);
+  }
+
+  return res.status(201).json({
+    success: true,
+    message: mailResult.sent
+      ? "Message sent successfully. Notification email delivered."
+      : "Message saved, but email notification is not configured yet.",
+  });
 });
 
 app.post("/api/resume-email", contactLimiter, async (req, res) => {

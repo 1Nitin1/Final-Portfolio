@@ -262,21 +262,6 @@ export default async function handler(req, res) {
        VALUES ($1, $2, $3, $4, $5)`,
       [name, email, message, ipAddress, userAgent],
     );
-
-    const mailResult = await sendContactNotification({
-      name,
-      email,
-      message,
-      ipAddress,
-      userAgent,
-    });
-
-    return sendJson(res, 201, {
-      success: true,
-      message: mailResult.sent
-        ? "Message sent successfully. Notification email delivered."
-        : "Message saved, but email notification is not configured yet.",
-    });
   } catch (error) {
     console.error("Vercel contact insert failed:", error);
 
@@ -302,4 +287,24 @@ export default async function handler(req, res) {
       message: "Server error while saving your message.",
     });
   }
+
+  let mailResult = { sent: false };
+  try {
+    mailResult = await sendContactNotification({
+      name,
+      email,
+      message,
+      ipAddress,
+      userAgent,
+    });
+  } catch (mailError) {
+    console.error("Vercel contact notification email failed:", mailError);
+  }
+
+  return sendJson(res, 201, {
+    success: true,
+    message: mailResult.sent
+      ? "Message sent successfully. Notification email delivered."
+      : "Message saved, but email notification is not configured yet.",
+  });
 }
