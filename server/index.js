@@ -59,12 +59,16 @@ async function sendContactNotification({
 
   const mailTo = process.env.MAIL_TO || defaultMailTo;
   const mailFrom = process.env.MAIL_FROM || process.env.SMTP_USER;
-  const submittedAt = new Date().toLocaleString("en-IN", {
-    dateStyle: "medium",
-    timeStyle: "short",
+  const submittedAt = new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
     timeZone: "Asia/Kolkata",
     timeZoneName: "short",
-  });
+  }).format(new Date());
 
   const subject = `New Portfolio Contact Message from ${name}`;
   const text = [
@@ -332,21 +336,6 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5)`,
       [name, email, message, ipAddress, userAgent],
     );
-
-    const mailResult = await sendContactNotification({
-      name,
-      email,
-      message,
-      ipAddress,
-      userAgent,
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: mailResult.sent
-        ? "Message sent successfully. Notification email delivered."
-        : "Message saved, but email notification is not configured yet.",
-    });
   } catch (error) {
     console.error("Error saving contact form:", error);
 
@@ -370,6 +359,37 @@ app.post("/api/contact", contactLimiter, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error while saving your message.",
+    });
+  }
+
+  try {
+    const mailResult = await sendContactNotification({
+      name,
+      email,
+      message,
+      ipAddress,
+      userAgent,
+    });
+
+    if (!mailResult.sent) {
+      return res.status(500).json({
+        success: false,
+        message:
+          mailResult.reason ||
+          "Message was saved, but email notification is not configured.",
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Message sent successfully. Notification email delivered.",
+    });
+  } catch (error) {
+    console.error("Error sending contact notification email:", error);
+    return res.status(502).json({
+      success: false,
+      message:
+        "Message was saved, but sending email notification failed. Check SMTP credentials and provider settings.",
     });
   }
 });
