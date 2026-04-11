@@ -16,7 +16,6 @@ import mstArenaProjectImage from "./assets/mst-arena.svg";
 const navItems = [
   { id: "home", label: "Home" },
   { id: "about", label: "About" },
-  { id: "orbit", label: "Orbit" },
   { id: "skills", label: "Skills" },
   { id: "projects", label: "Projects" },
   { id: "experience", label: "Experience" },
