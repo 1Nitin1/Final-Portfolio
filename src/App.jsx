@@ -43,9 +43,9 @@ const skillLabels = {
 const homeRoleTitles = ["AI/ML Developer", "Web Developer", "3D Designer"];
 
 const resumeViewUrl =
-  "https://drive.google.com/file/d/1gniCu779cwb1_O3-yF54fo0YI9mmHS7o/view?usp=drivesdk";
+  "https://drive.google.com/file/d/13r3uT4NFg6SApoWRpcuo1IGNv7GhzwLz/view?usp=drivesdk";
 const resumeDownloadUrl =
-  "https://drive.google.com/uc?export=download&id=1gniCu779cwb1_O3-yF54fo0YI9mmHS7o";
+  "https://drive.google.com/uc?export=download&id=13r3uT4NFg6SApoWRpcuo1IGNv7GhzwLz";
 
 const profileLinks = [
   {
