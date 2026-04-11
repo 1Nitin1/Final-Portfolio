@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">MST Arena game preview</title>
+  <desc id="desc">Gradient background with a centered game card titled MST Arena and a node graph.</desc>
+  <defs>
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a4c74" />
+      <stop offset="45%" stop-color="#102347" />
+      <stop offset="100%" stop-color="#8a3f30" />
+    </linearGradient>
+    <linearGradient id="cardGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3d5578" />
+      <stop offset="100%" stop-color="#3b2e4d" />
+    </linearGradient>
+    <linearGradient id="buttonGradient" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f6a14c" />
+      <stop offset="100%" stop-color="#ef5f4f" />
+    </linearGradient>
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="20" stdDeviation="18" flood-color="#0d1124" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bgGradient)" />
+  <circle cx="150" cy="650" r="220" fill="#28d8d1" opacity="0.18" />
+  <circle cx="1080" cy="130" r="180" fill="#ff754f" opacity="0.18" />
+
+  <g filter="url(#cardShadow)">
+    <rect x="330" y="130" width="620" height="460" rx="26" fill="url(#cardGradient)" fill-opacity="0.94" stroke="#8792ad" stroke-opacity="0.28" />
+  </g>
+
+  <text x="640" y="250" text-anchor="middle" fill="#f4f4ef" font-size="78" font-family="Poppins, Segoe UI, Arial, sans-serif" font-weight="700">MST Arena</text>
+
+  <g stroke="#79f0db" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.95">
+    <path d="M510 330 L690 312 L845 342" />
+    <path d="M510 330 L570 455 L760 465 L690 312" />
+    <path d="M570 455 L760 465" />
+  </g>
+
+  <g fill="#ffe2cd" stroke="#f98f67" stroke-width="6">
+    <circle cx="510" cy="330" r="18" />
+    <circle cx="690" cy="312" r="18" />
+    <circle cx="845" cy="342" r="18" />
+    <circle cx="570" cy="455" r="18" />
+    <circle cx="760" cy="465" r="18" />
+  </g>
+
+  <rect x="560" y="520" width="160" height="56" rx="18" fill="url(#buttonGradient)" />
+  <text x="640" y="556" text-anchor="middle" fill="#fff6ec" font-size="34" font-family="Poppins, Segoe UI, Arial, sans-serif" font-weight="700">Play</text>
+</svg>

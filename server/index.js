@@ -4,6 +4,14 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import nodemailer from "nodemailer";
 import { Pool } from "pg";
+import {
+  twoline2satrec,
+  propagate,
+  gstime,
+  eciToGeodetic,
+  degreesLat,
+  degreesLong,
+} from "satellite.js";
 
 dotenv.config();
 
@@ -127,8 +135,7 @@ async function sendContactNotification({
   });
 
   const resumePdfUrl =
-    process.env.RESUME_PDF_URL ||
-    "https://drive.google.com/uc?export=download&id=1gniCu779cwb1_O3-yF54fo0YI9mmHS7o";
+    "https://drive.google.com/uc?export=download&id=13r3uT4NFg6SApoWRpcuo1IGNv7GhzwLz";
 
   const autoReplySubject = "Thanks for reaching out — Nitin Baranwal";
   const autoReplyText = [
@@ -190,8 +197,7 @@ async function sendResumeEmail({ email }) {
 
   const mailFrom = process.env.MAIL_FROM || process.env.SMTP_USER;
   const resumePdfUrl =
-    process.env.RESUME_PDF_URL ||
-    "https://drive.google.com/uc?export=download&id=1gniCu779cwb1_O3-yF54fo0YI9mmHS7o";
+    "https://drive.google.com/uc?export=download&id=13r3uT4NFg6SApoWRpcuo1IGNv7GhzwLz";
   const subject = "Your requested resume - Nitin Baranwal";
   const text = [
     "Hi,",
@@ -202,7 +208,7 @@ async function sendResumeEmail({ email }) {
     "I am Nitin Baranwal, a Computer Science student and developer focused on web development, 3D experiences, and AI/ML.",
     "",
     "If the attachment does not open, you can use this backup link:",
-    "https://drive.google.com/file/d/1gniCu779cwb1_O3-yF54fo0YI9mmHS7o/view?usp=drivesdk",
+    "https://drive.google.com/file/d/13r3uT4NFg6SApoWRpcuo1IGNv7GhzwLz/view?usp=drivesdk",
     "",
     "Best regards,",
     "Nitin Baranwal",
@@ -215,7 +221,7 @@ async function sendResumeEmail({ email }) {
       <p style="margin: 0 0 10px;">Thanks for requesting my resume.</p>
       <p style="margin: 0 0 10px;">This is an automated email from my portfolio. My latest resume is attached as a PDF.</p>
       <p style="margin: 0 0 10px;">I am Nitin Baranwal, a Computer Science student and developer focused on web development, 3D experiences, and AI/ML.</p>
-      <p style="margin: 0 0 10px;">If the attachment does not open, use this backup link: <a href="https://drive.google.com/file/d/1gniCu779cwb1_O3-yF54fo0YI9mmHS7o/view?usp=drivesdk" target="_blank" rel="noreferrer">View Resume</a></p>
+      <p style="margin: 0 0 10px;">If the attachment does not open, use this backup link: <a href="https://drive.google.com/file/d/13r3uT4NFg6SApoWRpcuo1IGNv7GhzwLz/view?usp=drivesdk" target="_blank" rel="noreferrer">View Resume</a></p>
       <p style="margin: 0;">Best regards,<br />Nitin Baranwal</p>
     </div>
   `;
@@ -274,6 +280,180 @@ const contactLimiter = rateLimit({
     success: false,
     message: "Too many requests. Please wait a few minutes and try again.",
   },
+});
+
+function parseTleTextToRecords(tleText, typeLabel) {
+  const lines = tleText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const records = [];
+  for (let index = 0; index < lines.length - 1; index += 3) {
+    const name = lines[index] || "UNKNOWN";
+    const line1 = lines[index + 1];
+    const line2 = lines[index + 2];
+
+    if (!line1?.startsWith("1 ") || !line2?.startsWith("2 ")) {
+      continue;
+    }
+
+    records.push({
+      name,
+      line1,
+      line2,
+      type: typeLabel,
+    });
+  }
+
+  return records;
+}
+
+function toLiveGeodeticPoint(record, atTime) {
+  try {
+    const satrec = twoline2satrec(record.line1, record.line2);
+    const positionAndVelocity = propagate(satrec, atTime);
+
+    if (!positionAndVelocity?.position) {
+      return null;
+    }
+
+    const gmst = gstime(atTime);
+    const geodetic = eciToGeodetic(positionAndVelocity.position, gmst);
+    const lat = degreesLat(geodetic.latitude);
+    const lon = degreesLong(geodetic.longitude);
+    const altitudeKm = Number(geodetic.height || 0);
+
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lon) ||
+      !Number.isFinite(altitudeKm)
+    ) {
+      return null;
+    }
+
+    return {
+      id: `${record.type}-${record.line1.slice(2, 7).trim()}-${record.line2.slice(-5).trim()}`,
+      type: record.type,
+      name: record.name,
+      lat,
+      lon,
+      altitudeKm,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchTextWithTimeout(url, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`Upstream status ${response.status} for ${url}`);
+    }
+    return await response.text();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+app.get("/api/orbits", async (req, res) => {
+  const limitParam = Number(req.query?.limit || 2400);
+  const limit = Math.min(
+    Math.max(Number.isFinite(limitParam) ? limitParam : 1200, 100),
+    3000,
+  );
+
+  const activeUrl =
+    "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle";
+  const debrisUrl =
+    "https://celestrak.org/NORAD/elements/gp.php?GROUP=cosmos-1408-debris&FORMAT=tle";
+
+  try {
+    const [activeResult, debrisResult] = await Promise.allSettled([
+      fetchTextWithTimeout(activeUrl, 10000),
+      fetchTextWithTimeout(debrisUrl, 10000),
+    ]);
+
+    const activeTleText =
+      activeResult.status === "fulfilled" ? activeResult.value : "";
+    const debrisTleText =
+      debrisResult.status === "fulfilled" ? debrisResult.value : "";
+
+    if (!activeTleText && !debrisTleText) {
+      return res.status(502).json({
+        success: false,
+        message: "Unable to fetch orbital catalog data from upstream sources.",
+      });
+    }
+
+    const satelliteRecords = parseTleTextToRecords(activeTleText, "satellite");
+    const debrisRecords = parseTleTextToRecords(debrisTleText, "debris");
+
+    const now = new Date();
+    const points = [];
+    const satelliteQuota = Math.max(Math.floor(limit * 0.7), 1);
+    const debrisQuota = Math.max(Math.floor(limit * 0.3), 1);
+
+    for (let index = 0; index < satelliteRecords.length; index += 1) {
+      if (
+        points.filter((point) => point.type === "satellite").length >=
+        satelliteQuota
+      ) {
+        break;
+      }
+
+      const point = toLiveGeodeticPoint(satelliteRecords[index], now);
+      if (point) {
+        points.push(point);
+      }
+    }
+
+    for (let index = 0; index < debrisRecords.length; index += 1) {
+      if (
+        points.filter((point) => point.type === "debris").length >= debrisQuota
+      ) {
+        break;
+      }
+
+      const point = toLiveGeodeticPoint(debrisRecords[index], now);
+      if (point) {
+        points.push(point);
+      }
+    }
+
+    const fallbackPool = [...satelliteRecords, ...debrisRecords];
+    for (let index = 0; index < fallbackPool.length; index += 1) {
+      if (points.length >= limit) {
+        break;
+      }
+
+      const point = toLiveGeodeticPoint(fallbackPool[index], now);
+      if (point && !points.some((item) => item.id === point.id)) {
+        points.push(point);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      at: now.toISOString(),
+      counts: {
+        total: points.length,
+        satellites: points.filter((point) => point.type === "satellite").length,
+        debris: points.filter((point) => point.type === "debris").length,
+      },
+      points,
+    });
+  } catch (error) {
+    console.error("Error loading orbit catalog:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while loading orbit catalog.",
+    });
+  }
 });
 
 app.get("/api/health", (_req, res) => {

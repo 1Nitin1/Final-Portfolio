@@ -70,6 +70,62 @@ body,
   gap: 8px;
 }
 
+@media (min-width: 961px) {
+  .top-taskbar {
+    position: sticky;
+  }
+
+  .taskbar-nav {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+.taskbar-connect-wrap {
+  position: relative;
+  margin-left: auto;
+}
+
+.taskbar-connect-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 190px;
+  border: 1px solid rgba(211, 184, 255, 0.4);
+  border-radius: 14px;
+  background: rgba(21, 10, 38, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 14px 28px rgba(8, 2, 16, 0.5);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 30;
+}
+
+.taskbar-connect-link {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: rgba(239, 229, 255, 0.94);
+  background: transparent;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 8px 10px;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.taskbar-connect-link:hover {
+  color: #fff;
+  border-color: rgba(212, 186, 255, 0.52);
+  background: rgba(138, 82, 228, 0.22);
+}
+
 .taskbar-item {
   border: 1px solid transparent;
   border-radius: 10px;
@@ -1498,8 +1554,25 @@ body,
     text-align: center;
   }
 
+  .taskbar-connect-wrap {
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    transform: translateY(-50%);
+    margin-left: 0;
+    z-index: 26;
+  }
+
   .taskbar-cta {
-    display: none;
+    font-size: 0.82rem;
+    padding: 7px 10px;
+    border-radius: 10px;
+  }
+
+  .taskbar-connect-menu {
+    left: 0;
+    right: auto;
+    min-width: 170px;
   }
 
   .taskbar-mobile-toggle {
@@ -1697,5 +1770,80 @@ body,
   .buddy-mini {
     width: 50px;
     height: 50px;
+  }
+}
+
+.orbit-section {
+  width: 100%;
+  padding: 28px 16px 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.orbit-shell {
+  width: min(1160px, 100%);
+  border: 1px solid rgba(208, 182, 255, 0.28);
+  border-radius: 18px;
+  background:
+    radial-gradient(
+      circle at 12% 12%,
+      rgba(186, 156, 255, 0.14) 0%,
+      rgba(186, 156, 255, 0) 48%
+    ),
+    linear-gradient(
+      160deg,
+      rgba(30, 14, 56, 0.9) 0%,
+      rgba(17, 8, 33, 0.94) 100%
+    );
+  box-shadow:
+    0 20px 40px rgba(8, 3, 18, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  padding: 22px;
+}
+
+.orbit-kicker {
+  margin: 0;
+  color: rgba(214, 190, 255, 0.9);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.orbit-title {
+  margin: 8px 0 10px;
+  color: #f8f2ff;
+  font-size: clamp(1.4rem, 2.8vw, 2.1rem);
+}
+
+.orbit-subtitle {
+  margin: 0;
+  color: rgba(231, 219, 246, 0.86);
+  max-width: 760px;
+  line-height: 1.58;
+}
+
+.orbit-canvas-shell {
+  width: 100%;
+  height: 460px;
+  margin-top: 16px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(203, 179, 245, 0.26);
+  background: rgba(10, 8, 26, 0.45);
+}
+
+.orbit-status {
+  margin-top: 12px;
+  color: rgba(233, 220, 249, 0.9);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .orbit-shell {
+    padding: 16px;
+  }
+
+  .orbit-canvas-shell {
+    height: 360px;
   }
 }

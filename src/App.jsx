@@ -11,10 +11,12 @@ import { ResonanceOrrery } from "./components/ResonanceOrrery";
 import portfolioLogo from "./assets/logo .png";
 import calculatorProjectImage from "./assets/cal.png";
 import todoProjectImage from "./assets/todo.png";
+import mstArenaProjectImage from "./assets/mst-arena.svg";
 
 const navItems = [
   { id: "home", label: "Home" },
   { id: "about", label: "About" },
+  { id: "orbit", label: "Orbit" },
   { id: "skills", label: "Skills" },
   { id: "projects", label: "Projects" },
   { id: "experience", label: "Experience" },
@@ -45,6 +47,39 @@ const resumeViewUrl =
 const resumeDownloadUrl =
   "https://drive.google.com/uc?export=download&id=1gniCu779cwb1_O3-yF54fo0YI9mmHS7o";
 
+const profileLinks = [
+  {
+    id: "github",
+    label: "GitHub",
+    url: "https://github.com/1Nitin1",
+  },
+  {
+    id: "linkedin",
+    label: "LinkedIn",
+    url: "https://linkedin.com/in/nitin-baranwal0510",
+  },
+  {
+    id: "leetcode",
+    label: "LeetCode",
+    url: "https://leetcode.com/u/CodeZGod",
+  },
+  {
+    id: "codeforces",
+    label: "Codeforces",
+    url: "https://codeforces.com/profile/CodeXGod",
+  },
+  {
+    id: "codechef",
+    label: "CodeChef",
+    url: "https://www.codechef.com/users/codexgod",
+  },
+  {
+    id: "x",
+    label: "X",
+    url: "https://x.com/100Nitin100",
+  },
+];
+
 const projectCards = [
   {
     id: "calculator",
@@ -63,6 +98,15 @@ const projectCards = [
     image: todoProjectImage,
     imageAlt: "Todo app project preview",
     liveUrl: "https://todo-app-iota-flax.vercel.app/",
+  },
+  {
+    id: "mst-arena",
+    title: "MST Arena",
+    description:
+      "A graph-based game to learn Minimum Spanning Tree strategies with two playable modes: Prim and Kruskal.",
+    image: mstArenaProjectImage,
+    imageAlt: "MST Arena project preview",
+    liveUrl: "https://minimum-spanning-tree-game.vercel.app/",
   },
 ];
 
@@ -854,6 +898,9 @@ function App() {
     React.useState(false);
   const [resumeEmailStatus, setResumeEmailStatus] = React.useState("idle");
   const [resumeEmailMessage, setResumeEmailMessage] = React.useState("");
+  const [isConnectDropdownOpen, setIsConnectDropdownOpen] =
+    React.useState(false);
+  const connectDropdownRef = React.useRef(null);
   const isModelHeldRef = React.useRef(false);
   const aboutSectionRef = React.useRef(null);
   const aboutCardRef = React.useRef(null);
@@ -931,6 +978,32 @@ function App() {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  React.useEffect(() => {
+    if (!isConnectDropdownOpen || typeof window === "undefined") {
+      return;
+    }
+
+    const handlePointerDownOutside = (event) => {
+      if (!connectDropdownRef.current?.contains(event.target)) {
+        setIsConnectDropdownOpen(false);
+      }
+    };
+
+    const handleEscapeKey = (event) => {
+      if (event.key === "Escape") {
+        setIsConnectDropdownOpen(false);
+      }
+    };
+
+    window.addEventListener("pointerdown", handlePointerDownOutside);
+    window.addEventListener("keydown", handleEscapeKey);
+
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDownOutside);
+      window.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [isConnectDropdownOpen]);
 
   const useConservativeWebglMode = isMobileWebglMode || isLowSpecDevice;
 
@@ -1574,13 +1647,35 @@ function App() {
             </button>
           ))}
         </nav>
-        <button
-          type="button"
-          className="taskbar-cta"
-          onClick={() => handleNavClick("contact")}
-        >
-          Let&apos;s Connect
-        </button>
+        <div className="taskbar-connect-wrap" ref={connectDropdownRef}>
+          <button
+            type="button"
+            className="taskbar-cta"
+            aria-haspopup="menu"
+            aria-expanded={isConnectDropdownOpen}
+            onClick={() => setIsConnectDropdownOpen((prev) => !prev)}
+          >
+            Let&apos;s Connect
+          </button>
+
+          {isConnectDropdownOpen ? (
+            <div className="taskbar-connect-menu" role="menu">
+              {profileLinks.map((profile) => (
+                <a
+                  key={profile.id}
+                  href={profile.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  role="menuitem"
+                  className="taskbar-connect-link"
+                  onClick={() => setIsConnectDropdownOpen(false)}
+                >
+                  {profile.label}
+                </a>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </header>
 
       <section id="home" className="home-hero">

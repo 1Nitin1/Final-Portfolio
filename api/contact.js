@@ -146,8 +146,7 @@ async function sendContactNotification({
   });
 
   const resumePdfUrl =
-    process.env.RESUME_PDF_URL ||
-    "https://drive.google.com/uc?export=download&id=1gniCu779cwb1_O3-yF54fo0YI9mmHS7o";
+    "https://drive.google.com/uc?export=download&id=13r3uT4NFg6SApoWRpcuo1IGNv7GhzwLz";
 
   const autoReplySubject = "Thanks for reaching out — Nitin Baranwal";
   const autoReplyText = [
