@@ -8,7 +8,7 @@ import "./App.css";
 import { Model } from "./components/Model";
 import { NameModel } from "./components/NameModel";
 import { ResonanceOrrery } from "./components/ResonanceOrrery";
-import portfolioLogo from "./assets/logo .png";
+import portfolioLogo from "./assets/logo.png";
 import calculatorProjectImage from "./assets/cal.png";
 import todoProjectImage from "./assets/todo.png";
 import mstArenaProjectImage from "./assets/mst-arena.svg";
