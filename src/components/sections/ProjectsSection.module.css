@@ -1,0 +1,4 @@
+.section {
+  content-visibility: auto;
+  contain-intrinsic-size: 900px;
+}

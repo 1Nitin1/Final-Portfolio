@@ -1,0 +1,7 @@
+.taskbar {
+  will-change: transform;
+}
+
+.themeBtn {
+  min-width: 106px;
+}
