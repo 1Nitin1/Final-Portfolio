@@ -1,6 +1,7 @@
 import calculatorProjectImage from "../assets/cal.png";
 import todoProjectImage from "../assets/todo.png";
 import mstArenaProjectImage from "../assets/mst-arena.svg";
+import realEstateProjectImage from "../assets/image.png";
 
 export const navItems = [
   { id: "home", label: "Home" },
@@ -96,6 +97,15 @@ export const projectCards = [
     image: mstArenaProjectImage,
     imageAlt: "MST Arena project preview",
     liveUrl: "https://minimum-spanning-tree-game.vercel.app/",
+  },
+  {
+    id: "real-estate-management",
+    title: "Real Estate Management",
+    description:
+      "A full-stack real-estate platform demonstrating efficient and advanced PostgreSQL usage across complex relational workflows and query-heavy features.",
+    image: realEstateProjectImage,
+    imageAlt: "Real Estate Management project preview",
+    liveUrl: "https://real-estate-management-livid.vercel.app/",
   },
 ];
 

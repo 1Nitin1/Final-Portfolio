@@ -55,8 +55,11 @@ export const Taskbar = React.memo(function Taskbar({
           className={`theme-toggle-btn ${styles.themeBtn}`}
           onClick={onToggleTheme}
           aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          aria-pressed={theme === "light"}
         >
-          {theme === "dark" ? "Light Mode" : "Dark Mode"}
+          <span className="theme-icon" aria-hidden="true">
+            {theme === "dark" ? "☾" : "☀"}
+          </span>
         </button>
 
         <button
