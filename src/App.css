@@ -140,7 +140,8 @@ body,
 }
 
 .app-shell.theme-light .project-image-link,
-.app-shell.theme-light .about-name-canvas {
+.app-shell.theme-light .about-name-canvas,
+.app-shell.theme-light .about-name-2d {
   border-color: rgba(166, 135, 218, 0.36);
   background: rgba(255, 253, 255, 0.9);
 }
@@ -180,6 +181,27 @@ body,
 .app-shell.theme-light .growth-timeline-item-title,
 .app-shell.theme-light .contact-title {
   color: #321c56;
+}
+
+.app-shell.theme-light .about-achievements-panel {
+  border-color: rgba(168, 135, 221, 0.32);
+  background: linear-gradient(
+    150deg,
+    rgba(255, 251, 255, 0.95) 0%,
+    rgba(246, 238, 255, 0.96) 100%
+  );
+}
+
+.app-shell.theme-light .about-achievements-title {
+  color: #3a225f;
+}
+
+.app-shell.theme-light .about-achievement-item {
+  color: rgba(73, 46, 114, 0.9);
+}
+
+.app-shell.theme-light .about-achievement-item strong {
+  color: #2f1d4c;
 }
 
 .app-shell.theme-light .contact-input,
@@ -342,6 +364,10 @@ body,
   border-color: rgba(214, 185, 255, 0.76);
   background: rgba(159, 105, 249, 0.2);
   box-shadow: 0 0 16px rgba(149, 84, 238, 0.35);
+}
+
+.taskbar-theme-menu-item {
+  display: none;
 }
 
 .taskbar-cta {
@@ -581,6 +607,37 @@ body,
   user-select: none;
 }
 
+.about-name-2d {
+  width: 100%;
+  min-height: 92px;
+  border: 1px solid rgba(212, 184, 255, 0.28);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(19, 8, 34, 0.62), rgba(26, 12, 45, 0.44));
+  margin-bottom: 10px;
+  padding: 18px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 10px 24px rgba(9, 2, 19, 0.34);
+}
+
+.about-name-letter {
+  font-size: clamp(1.22rem, 2.6vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.05;
+  text-shadow: 0 0 16px rgba(180, 146, 255, 0.32);
+  transition:
+    color 220ms ease,
+    text-shadow 220ms ease,
+    transform 220ms ease;
+}
+
 .about-text {
   margin: 12px 0 22px;
   color: rgba(236, 224, 255, 0.84);
@@ -588,7 +645,7 @@ body,
   line-height: 1.55;
 }
 
-.skills-panel {
+.coding-profiles-panel {
   border: 1px solid rgba(212, 184, 255, 0.26);
   border-radius: 16px;
   padding: 16px;
@@ -596,18 +653,153 @@ body,
   backdrop-filter: blur(4px);
 }
 
-.skills-title {
-  margin: 0 0 12px;
+.coding-profiles-head {
+  margin-bottom: 12px;
+}
+
+.coding-profiles-title {
+  margin: 0;
   color: #fff;
   font-size: 1rem;
 }
 
-.skill-item {
-  margin-bottom: 14px;
+.coding-profiles-solved {
+  margin: 8px 0 0;
+  color: rgba(227, 211, 255, 0.86);
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
-.skill-item:last-child {
+.coding-profiles-solved strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.coding-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 10px;
+}
+
+.coding-profile-card {
+  border: 1px solid rgba(218, 193, 255, 0.26);
+  border-radius: 14px;
+  padding: 12px;
+  text-decoration: none;
+  background: linear-gradient(150deg, rgba(29, 13, 51, 0.84), rgba(19, 8, 34, 0.84));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  transition:
+    transform 190ms ease,
+    border-color 190ms ease,
+    box-shadow 190ms ease,
+    background 190ms ease;
+}
+
+.coding-profile-card:hover,
+.coding-profile-card:active {
+  transform: translateY(-2px);
+  border-color: rgba(227, 205, 255, 0.56);
+}
+
+.coding-profile-card.leetcode:hover,
+.coding-profile-card.leetcode:active {
+  box-shadow:
+    0 0 18px rgba(255, 176, 84, 0.28),
+    inset 0 0 0 1px rgba(255, 194, 129, 0.16);
+}
+
+.coding-profile-card.codechef:hover,
+.coding-profile-card.codechef:active {
+  box-shadow:
+    0 0 18px rgba(130, 186, 255, 0.3),
+    inset 0 0 0 1px rgba(148, 197, 255, 0.16);
+}
+
+.coding-profile-card.codeforces:hover,
+.coding-profile-card.codeforces:active {
+  box-shadow:
+    0 0 18px rgba(195, 137, 255, 0.28),
+    inset 0 0 0 1px rgba(208, 160, 255, 0.16);
+}
+
+.coding-profile-platform {
+  margin: 0;
+  color: rgba(232, 220, 255, 0.9);
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.coding-profile-rank {
+  margin: 6px 0 0;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.coding-profile-rating {
+  margin: 4px 0 0;
+  color: rgba(214, 185, 255, 0.95);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.coding-profiles-note {
+  margin: 12px 0 0;
+  color: rgba(229, 214, 255, 0.82);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.about-achievements-panel {
+  margin-top: 14px;
+  border: 1px solid rgba(212, 184, 255, 0.26);
+  border-radius: 16px;
+  padding: 15px 16px;
+  background: linear-gradient(145deg, rgba(20, 8, 36, 0.74), rgba(17, 7, 30, 0.66));
+  box-shadow:
+    0 10px 26px rgba(8, 2, 17, 0.36),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.about-achievements-panel:hover,
+.about-achievements-panel:active {
+  transform: translateY(-1px);
+  border-color: rgba(224, 200, 255, 0.58);
+  box-shadow:
+    0 0 18px rgba(165, 112, 255, 0.25),
+    0 14px 28px rgba(8, 2, 17, 0.42),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.about-achievements-title {
+  margin: 0 0 10px;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.about-achievement-item {
+  margin: 0 0 8px;
+  color: rgba(233, 220, 255, 0.86);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.about-achievement-item:last-child {
   margin-bottom: 0;
+}
+
+.about-achievement-item strong {
+  color: #fff;
+}
+
+.about-achievement-highlight {
+  color: rgba(167, 236, 255, 0.98);
+  text-shadow: 0 0 14px rgba(120, 214, 255, 0.42);
 }
 
 .skill-header {
@@ -1697,6 +1889,7 @@ body,
 
   .taskbar-brand {
     margin: 0;
+    grid-column: 2;
     justify-self: center;
     justify-content: center;
     text-align: center;
@@ -1730,14 +1923,23 @@ body,
     text-align: center;
   }
 
+  .taskbar-nav.mobile-open .taskbar-theme-menu-item {
+    display: block;
+  }
+
   .taskbar-connect-wrap {
     position: relative;
+    grid-column: 3;
     left: auto;
     top: auto;
     transform: none;
-    justify-self: start;
+    justify-self: end;
     margin-left: 0;
     z-index: 26;
+  }
+
+  .taskbar-connect-wrap .theme-toggle-btn {
+    display: none;
   }
 
   .taskbar-cta {
@@ -1762,9 +1964,10 @@ body,
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    grid-column: 1;
     position: static;
     transform: none;
-    justify-self: end;
+    justify-self: start;
   }
 
   .home-hero {
@@ -1796,6 +1999,12 @@ body,
     width: 100%;
     height: 108px;
     margin-left: 0;
+  }
+
+  .about-name-2d {
+    min-height: 84px;
+    margin-left: 0;
+    padding: 14px 12px;
   }
 
   .canvas-container {

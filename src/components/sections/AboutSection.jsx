@@ -1,18 +1,15 @@
-import React, { Suspense } from "react";
-import { Canvas } from "@react-three/fiber";
+import React from "react";
 import { gsap } from "gsap";
-import { NameModel } from "../NameModel";
-import { initialSkills, skillLabels } from "../../data/portfolioData";
+import { profileLinks } from "../../data/portfolioData";
 import styles from "./AboutSection.module.css";
 
-export const AboutSection = React.memo(function AboutSection({
-  useConservativeWebglMode,
-  attachWebglRecovery,
-}) {
+const NAME_TEXT = "NITIN BARANWAL";
+const NAME_COLORS = ["#f5f0ff", "#ffd6a5", "#95ffc2", "#9cc8ff", "#ffb8d2"];
+const BASE_NAME_COLOR = "#f5f0ff";
+
+export const AboutSection = React.memo(function AboutSection() {
   const aboutSectionRef = React.useRef(null);
-  const skillFillRefs = React.useRef({});
-  const [nameCanvasKey, setNameCanvasKey] = React.useState(0);
-  const [isNameContainerHeld, setIsNameContainerHeld] = React.useState(false);
+  const nameLetterRefs = React.useRef([]);
 
   React.useEffect(() => {
     if (!aboutSectionRef.current) {
@@ -36,25 +33,6 @@ export const AboutSection = React.memo(function AboutSection({
             ease: "power3.out",
           },
         );
-
-        Object.entries(initialSkills).forEach(([key, value], index) => {
-          const fill = skillFillRefs.current[key];
-          if (!fill) {
-            return;
-          }
-
-          gsap.fromTo(
-            fill,
-            { width: "0%" },
-            {
-              width: `${value}%`,
-              duration: 0.85,
-              ease: "power3.out",
-              delay: 0.12 + index * 0.06,
-            },
-          );
-        });
-
         observer.disconnect();
       },
       { threshold: 0.3 },
@@ -67,81 +45,95 @@ export const AboutSection = React.memo(function AboutSection({
     };
   }, []);
 
-  const handleNameCanvasCreated = React.useCallback(
-    ({ gl }) => {
-      attachWebglRecovery(gl?.domElement, () => {
-        setNameCanvasKey((prev) => prev + 1);
-      });
-    },
-    [attachWebglRecovery],
-  );
-
-  const handleNameCanvasPointerDown = React.useCallback((event) => {
-    setIsNameContainerHeld(true);
-
-    if (typeof event.currentTarget.setPointerCapture === "function") {
-      event.currentTarget.setPointerCapture(event.pointerId);
+  React.useEffect(() => {
+    const letters = nameLetterRefs.current.filter(Boolean);
+    if (!letters.length) {
+      return;
     }
+
+    const set = gsap.set;
+    letters.forEach((letter) => {
+      set(letter, { color: BASE_NAME_COLOR });
+    });
+
+    const timeline = gsap.timeline({ repeat: -1, repeatDelay: 0.06 });
+    timeline.to({}, {
+      duration: 0.18,
+      onRepeat: () => {
+        letters.forEach((letter) => {
+          set(letter, { color: BASE_NAME_COLOR, textShadow: "0 0 16px rgba(180, 146, 255, 0.32)" });
+        });
+
+        const picks = Math.min(4, letters.length);
+        for (let index = 0; index < picks; index += 1) {
+          const target = letters[Math.floor(Math.random() * letters.length)];
+          const color = NAME_COLORS[Math.floor(Math.random() * NAME_COLORS.length)];
+          gsap.to(target, {
+            color,
+            y: -2,
+            textShadow: `0 0 18px ${color}`,
+            duration: 0.22,
+            ease: "power2.out",
+            yoyo: true,
+            repeat: 1,
+          });
+        }
+      },
+    });
+
+    return () => {
+      timeline.kill();
+    };
   }, []);
 
-  const handleNameCanvasPointerUp = React.useCallback((event) => {
-    setIsNameContainerHeld(false);
-
-    if (typeof event.currentTarget.releasePointerCapture === "function") {
-      try {
-        event.currentTarget.releasePointerCapture(event.pointerId);
-      } catch {
-        return;
-      }
-    }
-  }, []);
-
-  const handleNameCanvasPointerCancel = React.useCallback((event) => {
-    setIsNameContainerHeld(false);
-
-    if (typeof event.currentTarget.releasePointerCapture === "function") {
-      try {
-        event.currentTarget.releasePointerCapture(event.pointerId);
-      } catch {
-        return;
-      }
-    }
+  const codingProfiles = React.useMemo(() => {
+    const linkById = Object.fromEntries(profileLinks.map((profile) => [profile.id, profile.url]));
+    return [
+      {
+        id: "leetcode",
+        name: "LeetCode",
+        rank: "Knight",
+        rating: "2030",
+        accentClass: "leetcode",
+        url: linkById.leetcode,
+      },
+      {
+        id: "codechef",
+        name: "CodeChef",
+        rank: "3 Star",
+        rating: "1770 Max",
+        accentClass: "codechef",
+        url: linkById.codechef,
+      },
+      {
+        id: "codeforces",
+        name: "Codeforces",
+        rank: "Specialist",
+        rating: "1563",
+        accentClass: "codeforces",
+        url: linkById.codeforces,
+      },
+    ];
   }, []);
 
   return (
     <section id="about" ref={aboutSectionRef} className={`about-inline ${styles.about}`}>
       <div className="about-card">
         <p className="about-kicker about-animate">About Me</p>
-        <div
-          className="about-name-canvas about-animate"
-          onPointerDown={handleNameCanvasPointerDown}
-          onPointerUp={handleNameCanvasPointerUp}
-          onPointerCancel={handleNameCanvasPointerCancel}
-          onPointerLeave={handleNameCanvasPointerCancel}
-        >
-          <Canvas
-            key={nameCanvasKey}
-            camera={{ position: [0, 0, 5], fov: 45 }}
-            dpr={useConservativeWebglMode ? [0.75, 1] : [1, 1.75]}
-            gl={{
-              antialias: !useConservativeWebglMode,
-              powerPreference: useConservativeWebglMode ? "low-power" : "high-performance",
-              stencil: false,
-            }}
-            performance={{ min: useConservativeWebglMode ? 0.4 : 0.6 }}
-            onCreated={handleNameCanvasCreated}
-          >
-            <ambientLight intensity={0.9} />
-            <directionalLight position={[2, 2, 4]} intensity={1.1} />
-            <Suspense fallback={null}>
-              <NameModel
-                position={[-4.8, -0.5, 0]}
-                rotation={[Math.PI / 2, 0, 0]}
-                scale={1.8}
-                mobileHoldActive={isNameContainerHeld}
-              />
-            </Suspense>
-          </Canvas>
+        <div className="about-name-2d about-animate" aria-label={NAME_TEXT}>
+          {Array.from(NAME_TEXT).map((character, index) => (
+            <span
+              key={`${character}-${index}`}
+              className="about-name-letter"
+              ref={(element) => {
+                if (character !== " ") {
+                  nameLetterRefs.current[index] = element;
+                }
+              }}
+            >
+              {character === " " ? "\u00A0" : character}
+            </span>
+          ))}
         </div>
 
         <p className="about-text about-animate">
@@ -151,26 +143,45 @@ export const AboutSection = React.memo(function AboutSection({
           products that feel alive.
         </p>
 
-        <div id="skill-ratings" className="skills-panel about-animate">
-          <h3 className="skills-title">Skill Ratings</h3>
-          {Object.keys(initialSkills).map((skillKey) => (
-            <div key={skillKey} className="skill-item">
-              <div className="skill-header">
-                <span className="skill-name">{skillLabels[skillKey]}</span>
-                <span className="skill-value">{initialSkills[skillKey]}%</span>
-              </div>
+        <div id="coding-profiles" className="coding-profiles-panel about-animate">
+          <div className="coding-profiles-head">
+            <h3 className="coding-profiles-title">Coding Profiles</h3>
+            <p className="coding-profiles-solved">
+              Solved <strong>1500+</strong> problems till date across competitive coding platforms.
+            </p>
+          </div>
 
-              <div className="skill-track">
-                <div
-                  ref={(element) => {
-                    skillFillRefs.current[skillKey] = element;
-                  }}
-                  className="skill-fill"
-                  style={{ width: "0%" }}
-                />
-              </div>
-            </div>
-          ))}
+          <div className="coding-profile-grid">
+            {codingProfiles.map((profile) => (
+              <a
+                key={profile.id}
+                href={profile.url}
+                target="_blank"
+                rel="noreferrer"
+                className={`coding-profile-card ${profile.accentClass}`}
+                aria-label={`Open ${profile.name} profile`}
+              >
+                <p className="coding-profile-platform">{profile.name}</p>
+                <p className="coding-profile-rank">{profile.rank}</p>
+                <p className="coding-profile-rating">{profile.rating} rating</p>
+              </a>
+            ))}
+          </div>
+          <p className="coding-profiles-note">
+            Consistent problem-solving has shaped my approach to writing cleaner logic and faster,
+            more reliable code under constraints.
+          </p>
+        </div>
+
+        <div className="about-achievements-panel about-animate">
+          <h3 className="about-achievements-title">Achievements</h3>
+          <p className="about-achievement-item">
+            Won <strong>1st place</strong> in the hackathon held at DTU named
+            <span className="about-achievement-highlight"> "Game up your DSA"</span>.
+          </p>
+          <p className="about-achievement-item">
+            Secured <strong>2nd runner up</strong> in a state-level DSA contest.
+          </p>
         </div>
       </div>
     </section>

@@ -47,6 +47,18 @@ export const Taskbar = React.memo(function Taskbar({
             {item.label}
           </button>
         ))}
+
+        <button
+          type="button"
+          className="taskbar-item taskbar-theme-menu-item"
+          onClick={() => {
+            onToggleTheme();
+            onToggleMobileNav();
+          }}
+          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        >
+          Theme {theme === "dark" ? "☾" : "☀"}
+        </button>
       </nav>
 
       <div className="taskbar-connect-wrap" ref={connectDropdownRef}>
