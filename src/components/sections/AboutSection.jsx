@@ -51,38 +51,40 @@ export const AboutSection = React.memo(function AboutSection() {
       return;
     }
 
-    const set = gsap.set;
-    letters.forEach((letter) => {
-      set(letter, { color: BASE_NAME_COLOR });
-    });
+    const resetLetters = () => {
+      gsap.set(letters, {
+        color: BASE_NAME_COLOR,
+        y: 0,
+        textShadow: "0 0 16px rgba(180, 146, 255, 0.32)",
+      });
+    };
 
-    const timeline = gsap.timeline({ repeat: -1, repeatDelay: 0.06 });
-    timeline.to({}, {
-      duration: 0.18,
-      onRepeat: () => {
-        letters.forEach((letter) => {
-          set(letter, { color: BASE_NAME_COLOR, textShadow: "0 0 16px rgba(180, 146, 255, 0.32)" });
+    const glowPulse = () => {
+      resetLetters();
+      const picks = Math.min(5, letters.length);
+      const shuffled = [...letters].sort(() => Math.random() - 0.5).slice(0, picks);
+
+      shuffled.forEach((target) => {
+        const color = NAME_COLORS[Math.floor(Math.random() * NAME_COLORS.length)];
+        gsap.to(target, {
+          color,
+          y: -2,
+          textShadow: `0 0 22px ${color}`,
+          duration: 0.24,
+          ease: "power2.out",
+          yoyo: true,
+          repeat: 1,
         });
+      });
+    };
 
-        const picks = Math.min(4, letters.length);
-        for (let index = 0; index < picks; index += 1) {
-          const target = letters[Math.floor(Math.random() * letters.length)];
-          const color = NAME_COLORS[Math.floor(Math.random() * NAME_COLORS.length)];
-          gsap.to(target, {
-            color,
-            y: -2,
-            textShadow: `0 0 18px ${color}`,
-            duration: 0.22,
-            ease: "power2.out",
-            yoyo: true,
-            repeat: 1,
-          });
-        }
-      },
-    });
+    resetLetters();
+    glowPulse();
+    const intervalId = window.setInterval(glowPulse, 360);
 
     return () => {
-      timeline.kill();
+      window.clearInterval(intervalId);
+      gsap.killTweensOf(letters);
     };
   }, []);
 
